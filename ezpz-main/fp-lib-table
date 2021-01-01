@@ -1,0 +1,3 @@
+(fp_lib_table
+  (lib (name ez80f91)(type KiCad)(uri ${KIPRJMOD}/lib/ez80f91.pretty)(options "")(descr ""))
+)

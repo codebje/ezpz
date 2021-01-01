@@ -1,0 +1,591 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L ez80f91:EZ80F91AZ050SG U?
+U 1 1 5FD878CE
+P 4530 960
+F 0 "U?" H 5480 1225 50  0000 C CNN
+F 1 "EZ80F91AZA50SG" H 5480 1134 50  0000 C CNN
+F 2 "Ixys_Zilog-EZ80F91AZ050SG-*" H 4530 1360 50  0001 L CNN
+F 3 "" H 4530 1460 50  0001 L CNN
+F 4 "rev15, Sep-2010" H 4530 1560 50  0001 L CNN "Datasheet Version"
+F 5 "144-Pin Plastic Low-Profile Quad Flat Pack, 20 x 20 mm Body, 0.5 mm Pitch (LQFP)" H 4530 1660 50  0001 L CNN "Package Description"
+F 6 "2010" H 4530 1760 50  0001 L CNN "Package Version"
+F 7 "IC" H 4530 1860 50  0001 L CNN "category"
+F 8 "2568867" H 4530 1960 50  0001 L CNN "ciiva ids"
+F 9 "c98627f69eeea208" H 4530 2060 50  0001 L CNN "library id"
+F 10 "Ixys Zilog" H 4530 2160 50  0001 L CNN "manufacturer"
+F 11 "LQFP144" H 4530 2260 50  0001 L CNN "package"
+F 12 "1302224866" H 4530 2360 50  0001 L CNN "release date"
+F 13 "CC87012B-BBCA-4D35-8AF6-AEF612180393" H 4530 2460 50  0001 L CNN "vault revision"
+F 14 "yes" H 4530 2560 50  0001 L CNN "imported"
+F 15 "Zilog" H 4530 960 50  0001 C CNN "MFG Name"
+F 16 "EZ80F91AZA50SK" H 4530 960 50  0001 C CNN "MFG Part Num"
+F 17 "Mouser" H 4530 960 50  0001 C CNN "Distrib Name"
+F 18 "692-EZ80F91AZA50SK" H 4530 960 50  0001 C CNN "Distrib Part Num"
+	1    4530 960 
+	1    0    0    -1  
+$EndComp
+$Comp
+L ez80f91:EZ80F91AZ050SG U?
+U 2 1 5FD8C4EE
+P 7720 5640
+F 0 "U?" H 8320 5905 50  0000 C CNN
+F 1 "EZ80F91AZA50SG" H 8320 5814 50  0000 C CNN
+F 2 "Ixys_Zilog-EZ80F91AZ050SG-*" H 7720 6040 50  0001 L CNN
+F 3 "" H 7720 6140 50  0001 L CNN
+F 4 "rev15, Sep-2010" H 7720 6240 50  0001 L CNN "Datasheet Version"
+F 5 "144-Pin Plastic Low-Profile Quad Flat Pack, 20 x 20 mm Body, 0.5 mm Pitch (LQFP)" H 7720 6340 50  0001 L CNN "Package Description"
+F 6 "2010" H 7720 6440 50  0001 L CNN "Package Version"
+F 7 "IC" H 7720 6540 50  0001 L CNN "category"
+F 8 "2568867" H 7720 6640 50  0001 L CNN "ciiva ids"
+F 9 "c98627f69eeea208" H 7720 6740 50  0001 L CNN "library id"
+F 10 "Ixys Zilog" H 7720 6840 50  0001 L CNN "manufacturer"
+F 11 "LQFP144" H 7720 6940 50  0001 L CNN "package"
+F 12 "1302224866" H 7720 7040 50  0001 L CNN "release date"
+F 13 "CC87012B-BBCA-4D35-8AF6-AEF612180393" H 7720 7140 50  0001 L CNN "vault revision"
+F 14 "yes" H 7720 7240 50  0001 L CNN "imported"
+	2    7720 5640
+	1    0    0    -1  
+$EndComp
+$Comp
+L ez80f91:EZ80F91AZ050SG U?
+U 3 1 5FD90BF6
+P 1540 4550
+F 0 "U?" H 2140 4815 50  0000 C CNN
+F 1 "EZ80F91AZA50SG" H 2140 4724 50  0000 C CNN
+F 2 "Ixys_Zilog-EZ80F91AZ050SG-*" H 1540 4950 50  0001 L CNN
+F 3 "" H 1540 5050 50  0001 L CNN
+F 4 "rev15, Sep-2010" H 1540 5150 50  0001 L CNN "Datasheet Version"
+F 5 "144-Pin Plastic Low-Profile Quad Flat Pack, 20 x 20 mm Body, 0.5 mm Pitch (LQFP)" H 1540 5250 50  0001 L CNN "Package Description"
+F 6 "2010" H 1540 5350 50  0001 L CNN "Package Version"
+F 7 "IC" H 1540 5450 50  0001 L CNN "category"
+F 8 "2568867" H 1540 5550 50  0001 L CNN "ciiva ids"
+F 9 "c98627f69eeea208" H 1540 5650 50  0001 L CNN "library id"
+F 10 "Ixys Zilog" H 1540 5750 50  0001 L CNN "manufacturer"
+F 11 "LQFP144" H 1540 5850 50  0001 L CNN "package"
+F 12 "1302224866" H 1540 5950 50  0001 L CNN "release date"
+F 13 "CC87012B-BBCA-4D35-8AF6-AEF612180393" H 1540 6050 50  0001 L CNN "vault revision"
+F 14 "yes" H 1540 6150 50  0001 L CNN "imported"
+F 15 "Zilog" H 1540 4550 50  0001 C CNN "MFG Name"
+F 16 "EZ80F91AZA50SK" H 1540 4550 50  0001 C CNN "MFG Part Num"
+F 17 "Mouser" H 1540 4550 50  0001 C CNN "Distrib Name"
+F 18 "692-EZ80F91AZA50SK" H 1540 4550 50  0001 C CNN "Distrib Part Num"
+	3    1540 4550
+	1    0    0    -1  
+$EndComp
+$Comp
+L ez80f91:EZ80F91AZ050SG U?
+U 4 1 5FD95CFE
+P 1140 1170
+F 0 "U?" H 1840 1435 50  0000 C CNN
+F 1 "EZ80F91AZA50SG" H 1840 1344 50  0000 C CNN
+F 2 "Ixys_Zilog-EZ80F91AZ050SG-*" H 1140 1570 50  0001 L CNN
+F 3 "" H 1140 1670 50  0001 L CNN
+F 4 "rev15, Sep-2010" H 1140 1770 50  0001 L CNN "Datasheet Version"
+F 5 "144-Pin Plastic Low-Profile Quad Flat Pack, 20 x 20 mm Body, 0.5 mm Pitch (LQFP)" H 1140 1870 50  0001 L CNN "Package Description"
+F 6 "2010" H 1140 1970 50  0001 L CNN "Package Version"
+F 7 "IC" H 1140 2070 50  0001 L CNN "category"
+F 8 "2568867" H 1140 2170 50  0001 L CNN "ciiva ids"
+F 9 "c98627f69eeea208" H 1140 2270 50  0001 L CNN "library id"
+F 10 "Ixys Zilog" H 1140 2370 50  0001 L CNN "manufacturer"
+F 11 "LQFP144" H 1140 2470 50  0001 L CNN "package"
+F 12 "1302224866" H 1140 2570 50  0001 L CNN "release date"
+F 13 "CC87012B-BBCA-4D35-8AF6-AEF612180393" H 1140 2670 50  0001 L CNN "vault revision"
+F 14 "yes" H 1140 2770 50  0001 L CNN "imported"
+	4    1140 1170
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:USB_B_Micro J?
+U 1 1 5FDC2479
+P 10720 3750
+F 0 "J?" H 10777 4217 50  0000 C CNN
+F 1 "USB_B_Micro" H 10777 4126 50  0000 C CNN
+F 2 "" H 10870 3700 50  0001 C CNN
+F 3 "~" H 10870 3700 50  0001 C CNN
+	1    10720 3750
+	-1   0    0    -1  
+$EndComp
+$Comp
+L Regulator_Linear:MCP1826S U?
+U 1 1 5FDD565C
+P 1640 6860
+F 0 "U?" H 1640 7102 50  0000 C CNN
+F 1 "MCP1826S" H 1640 7011 50  0000 C CNN
+F 2 "" H 1540 7010 50  0001 C CNN
+F 3 "http://ww1.microchip.com/downloads/en/DeviceDoc/22057B.pdf" H 1640 7110 50  0001 C CNN
+	1    1640 6860
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C_Small C?
+U 1 1 5FDD6E4B
+P 2150 7040
+F 0 "C?" H 2242 7086 50  0000 L CNN
+F 1 "4.7uF" H 2242 6995 50  0000 L CNN
+F 2 "" H 2150 7040 50  0001 C CNN
+F 3 "~" H 2150 7040 50  0001 C CNN
+	1    2150 7040
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C_Small C?
+U 1 1 5FDD79DF
+P 1130 7040
+F 0 "C?" H 1222 7086 50  0000 L CNN
+F 1 "4.7uF" H 1222 6995 50  0000 L CNN
+F 2 "" H 1130 7040 50  0001 C CNN
+F 3 "~" H 1130 7040 50  0001 C CNN
+	1    1130 7040
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1340 6860 1130 6860
+Wire Wire Line
+	1130 6860 1130 6940
+Wire Wire Line
+	1940 6860 2150 6860
+Wire Wire Line
+	2150 6860 2150 6940
+Wire Wire Line
+	1130 7140 1130 7230
+Wire Wire Line
+	1130 7230 1640 7230
+Wire Wire Line
+	1640 7230 1640 7160
+Wire Wire Line
+	1640 7230 2150 7230
+Wire Wire Line
+	2150 7230 2150 7140
+Connection ~ 1640 7230
+$Comp
+L power:GNDREF #PWR?
+U 1 1 5FDDD50E
+P 1640 7370
+F 0 "#PWR?" H 1640 7120 50  0001 C CNN
+F 1 "GNDREF" H 1645 7197 50  0000 C CNN
+F 2 "" H 1640 7370 50  0001 C CNN
+F 3 "" H 1640 7370 50  0001 C CNN
+	1    1640 7370
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1640 7370 1640 7230
+$Comp
+L power:VBUS #PWR?
+U 1 1 5FDE35E4
+P 1130 6660
+F 0 "#PWR?" H 1130 6510 50  0001 C CNN
+F 1 "VBUS" H 1145 6833 50  0000 C CNN
+F 2 "" H 1130 6660 50  0001 C CNN
+F 3 "" H 1130 6660 50  0001 C CNN
+	1    1130 6660
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1130 6660 1130 6860
+Connection ~ 1130 6860
+$Comp
+L power:+3V3 #PWR?
+U 1 1 5FDE677C
+P 2150 6660
+F 0 "#PWR?" H 2150 6510 50  0001 C CNN
+F 1 "+3V3" H 2165 6833 50  0000 C CNN
+F 2 "" H 2150 6660 50  0001 C CNN
+F 3 "" H 2150 6660 50  0001 C CNN
+	1    2150 6660
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2150 6660 2150 6860
+Connection ~ 2150 6860
+$Comp
+L power:GNDREF #PWR?
+U 1 1 5FDE814E
+P 2590 2990
+F 0 "#PWR?" H 2590 2740 50  0001 C CNN
+F 1 "GNDREF" H 2595 2817 50  0000 C CNN
+F 2 "" H 2590 2990 50  0001 C CNN
+F 3 "" H 2590 2990 50  0001 C CNN
+	1    2590 2990
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2440 2870 2590 2870
+Wire Wire Line
+	2590 2870 2590 2990
+Wire Wire Line
+	2440 1170 2590 1170
+Wire Wire Line
+	2590 1170 2590 1370
+Connection ~ 2590 2870
+Wire Wire Line
+	2440 1370 2590 1370
+Connection ~ 2590 1370
+Wire Wire Line
+	2590 1370 2590 1470
+Wire Wire Line
+	2440 1470 2590 1470
+Connection ~ 2590 1470
+Wire Wire Line
+	2590 1470 2590 1570
+Wire Wire Line
+	2440 1570 2590 1570
+Connection ~ 2590 1570
+Wire Wire Line
+	2590 1570 2590 1670
+Wire Wire Line
+	2440 1670 2590 1670
+Connection ~ 2590 1670
+Wire Wire Line
+	2590 1670 2590 1770
+Wire Wire Line
+	2440 1770 2590 1770
+Connection ~ 2590 1770
+Wire Wire Line
+	2590 1770 2590 1870
+Wire Wire Line
+	2440 1870 2590 1870
+Connection ~ 2590 1870
+Wire Wire Line
+	2590 1870 2590 1970
+Wire Wire Line
+	2440 1970 2590 1970
+Connection ~ 2590 1970
+Wire Wire Line
+	2590 1970 2590 2070
+Wire Wire Line
+	2440 2070 2590 2070
+Connection ~ 2590 2070
+Wire Wire Line
+	2590 2070 2590 2170
+Wire Wire Line
+	2440 2170 2590 2170
+Connection ~ 2590 2170
+Wire Wire Line
+	2590 2170 2590 2270
+Wire Wire Line
+	2440 2270 2590 2270
+Connection ~ 2590 2270
+Wire Wire Line
+	2590 2270 2590 2370
+Wire Wire Line
+	2440 2370 2590 2370
+Connection ~ 2590 2370
+Wire Wire Line
+	2590 2370 2590 2470
+Wire Wire Line
+	2440 2470 2590 2470
+Connection ~ 2590 2470
+Wire Wire Line
+	2590 2470 2590 2570
+Wire Wire Line
+	2440 2570 2590 2570
+Connection ~ 2590 2570
+Wire Wire Line
+	2590 2570 2590 2670
+Wire Wire Line
+	2440 2670 2590 2670
+Connection ~ 2590 2670
+Wire Wire Line
+	2590 2670 2590 2770
+Wire Wire Line
+	2440 2770 2590 2770
+Connection ~ 2590 2770
+Wire Wire Line
+	2590 2770 2590 2870
+$Comp
+L power:+3V3 #PWR?
+U 1 1 5FDEF83D
+P 950 910
+F 0 "#PWR?" H 950 760 50  0001 C CNN
+F 1 "+3V3" H 965 1083 50  0000 C CNN
+F 2 "" H 950 910 50  0001 C CNN
+F 3 "" H 950 910 50  0001 C CNN
+	1    950  910 
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	950  910  950  1170
+Wire Wire Line
+	950  1170 1240 1170
+Wire Wire Line
+	950  1170 950  1470
+Wire Wire Line
+	950  2670 1240 2670
+Connection ~ 950  1170
+Wire Wire Line
+	1240 1470 950  1470
+Connection ~ 950  1470
+Wire Wire Line
+	950  1470 950  1570
+Wire Wire Line
+	1240 1570 950  1570
+Connection ~ 950  1570
+Wire Wire Line
+	950  1570 950  1670
+Wire Wire Line
+	1240 1670 950  1670
+Connection ~ 950  1670
+Wire Wire Line
+	950  1670 950  1770
+Wire Wire Line
+	1240 1770 950  1770
+Connection ~ 950  1770
+Wire Wire Line
+	950  1770 950  1870
+Wire Wire Line
+	1240 1870 950  1870
+Connection ~ 950  1870
+Wire Wire Line
+	950  1870 950  1970
+Wire Wire Line
+	1240 1970 950  1970
+Connection ~ 950  1970
+Wire Wire Line
+	950  1970 950  2070
+Wire Wire Line
+	1240 2070 950  2070
+Connection ~ 950  2070
+Wire Wire Line
+	950  2070 950  2170
+Wire Wire Line
+	1240 2170 950  2170
+Connection ~ 950  2170
+Wire Wire Line
+	950  2170 950  2270
+Wire Wire Line
+	1240 2270 950  2270
+Connection ~ 950  2270
+Wire Wire Line
+	950  2270 950  2370
+Wire Wire Line
+	1240 2370 950  2370
+Connection ~ 950  2370
+Wire Wire Line
+	950  2370 950  2470
+Wire Wire Line
+	1240 2470 950  2470
+Connection ~ 950  2470
+Wire Wire Line
+	950  2470 950  2570
+Wire Wire Line
+	1240 2570 950  2570
+Connection ~ 950  2570
+Wire Wire Line
+	950  2570 950  2670
+$Comp
+L Device:D_Schottky D?
+U 1 1 5FE00179
+P 1470 790
+F 0 "D?" H 1470 1006 50  0000 C CNN
+F 1 "D_Schottky" H 1470 915 50  0000 C CNN
+F 2 "" H 1470 790 50  0001 C CNN
+F 3 "~" H 1470 790 50  0001 C CNN
+	1    1470 790 
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:D_Schottky D?
+U 1 1 5FE01EC9
+P 1880 770
+F 0 "D?" H 1880 986 50  0000 C CNN
+F 1 "D_Schottky" H 1880 895 50  0000 C CNN
+F 2 "" H 1880 770 50  0001 C CNN
+F 3 "~" H 1880 770 50  0001 C CNN
+	1    1880 770 
+	1    0    0    -1  
+$EndComp
+$Comp
+L cp210x:CP2105 U?
+U 1 1 5FE08D4B
+P 8720 3250
+F 0 "U?" H 8720 3915 50  0000 C CNN
+F 1 "CP2105" H 8720 3824 50  0000 C CNN
+F 2 "" H 8720 3250 50  0001 C CNN
+F 3 "" H 8720 3250 50  0001 C CNN
+F 4 "Silicon Labs" H 8720 3250 50  0001 C CNN "MFG Name"
+F 5 "CP2105-F01-GM" H 8720 3250 50  0001 C CNN "MFG Part Num"
+F 6 "Mouser" H 8720 3250 50  0001 C CNN "Distrib Name"
+F 7 "634-CP2105-F01-GM" H 8720 3250 50  0001 C CNN "Distrib Part Num"
+	1    8720 3250
+	-1   0    0    -1  
+$EndComp
+Wire Wire Line
+	10420 3550 10020 3550
+NoConn ~ 10420 3950
+Wire Wire Line
+	10420 3850 10220 3850
+Wire Wire Line
+	10220 3850 10220 4400
+Wire Wire Line
+	10220 4400 9420 4400
+Wire Wire Line
+	10420 3750 10120 3750
+Wire Wire Line
+	10120 3750 10120 4300
+Wire Wire Line
+	10120 4300 9640 4300
+Wire Wire Line
+	9420 4200 9540 4200
+Wire Wire Line
+	10020 4200 10020 3550
+Connection ~ 10020 3550
+Wire Wire Line
+	10020 3550 9420 3550
+$Comp
+L dk_TVS-Diodes:SP0503BAHTG D?
+U 1 1 5FE1E803
+P 9920 4730
+F 0 "D?" H 9870 5077 60  0000 C CNN
+F 1 "SP0503BAHTG" H 9870 4971 60  0000 C CNN
+F 2 "digikey-footprints:SOT-143-4" H 10120 4930 60  0001 L CNN
+F 3 "https://www.littelfuse.com/~/media/files/littelfuse/technical%20resources/documents/data%20sheets/sp05xxba.pdf" H 10120 5030 60  0001 L CNN
+F 4 "F2715CT-ND" H 10120 5130 60  0001 L CNN "Digi-Key_PN"
+F 5 "SP0503BAHTG" H 10120 5230 60  0001 L CNN "MPN"
+F 6 "Circuit Protection" H 10120 5330 60  0001 L CNN "Category"
+F 7 "TVS - Diodes" H 10120 5430 60  0001 L CNN "Family"
+F 8 "https://www.littelfuse.com/~/media/files/littelfuse/technical%20resources/documents/data%20sheets/sp05xxba.pdf" H 10120 5530 60  0001 L CNN "DK_Datasheet_Link"
+F 9 "/product-detail/en/littelfuse-inc/SP0503BAHTG/F2715CT-ND/1154322" H 10120 5630 60  0001 L CNN "DK_Detail_Page"
+F 10 "TVS DIODE 5.5V 8.5V SOT143-4" H 10120 5730 60  0001 L CNN "Description"
+F 11 "Littelfuse Inc." H 10120 5830 60  0001 L CNN "Manufacturer"
+F 12 "Active" H 10120 5930 60  0001 L CNN "Status"
+F 13 "Littelfuse" H 9920 4730 50  0001 C CNN "MFG Name"
+F 14 "SP0503BAHTG" H 9920 4730 50  0001 C CNN "MFG Part Num"
+F 15 "Mouser" H 9920 4730 50  0001 C CNN "Distrib Name"
+F 16 "576-SP0503BAHTG" H 9920 4730 50  0001 C CNN "Distrib Part Num"
+	1    9920 4730
+	-1   0    0    -1  
+$EndComp
+Wire Wire Line
+	10220 4630 10820 4630
+Wire Wire Line
+	10820 4630 10820 4150
+Wire Wire Line
+	10220 4830 10350 4830
+Wire Wire Line
+	10350 4830 10350 4400
+Wire Wire Line
+	10350 4400 10220 4400
+Connection ~ 10220 4400
+Wire Wire Line
+	9720 4630 9640 4630
+Wire Wire Line
+	9640 4630 9640 4300
+Connection ~ 9640 4300
+Wire Wire Line
+	9640 4300 9420 4300
+Wire Wire Line
+	9720 4830 9540 4830
+Wire Wire Line
+	9540 4830 9540 4200
+Connection ~ 9540 4200
+Wire Wire Line
+	9540 4200 10020 4200
+$Comp
+L power:GNDREF #PWR?
+U 1 1 5FE2DDE3
+P 10720 4280
+F 0 "#PWR?" H 10720 4030 50  0001 C CNN
+F 1 "GNDREF" H 10725 4107 50  0000 C CNN
+F 2 "" H 10720 4280 50  0001 C CNN
+F 3 "" H 10720 4280 50  0001 C CNN
+	1    10720 4280
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	10720 4280 10720 4150
+$Comp
+L power:GNDREF #PWR?
+U 1 1 5FE3442F
+P 9540 3940
+F 0 "#PWR?" H 9540 3690 50  0001 C CNN
+F 1 "GNDREF" H 9545 3767 50  0000 C CNN
+F 2 "" H 9540 3940 50  0001 C CNN
+F 3 "" H 9540 3940 50  0001 C CNN
+	1    9540 3940
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	9540 3940 9540 3900
+Wire Wire Line
+	9540 3900 9420 3900
+$Comp
+L Device:C_Small C?
+U 1 1 5FE3AE20
+P 7330 3310
+F 0 "C?" H 7422 3356 50  0000 L CNN
+F 1 "4.7uF" H 7422 3265 50  0000 L CNN
+F 2 "" H 7330 3310 50  0001 C CNN
+F 3 "~" H 7330 3310 50  0001 C CNN
+	1    7330 3310
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	8020 3150 7330 3150
+Wire Wire Line
+	7330 3150 7330 3210
+$Comp
+L power:GNDREF #PWR?
+U 1 1 5FE3E53E
+P 7330 3490
+F 0 "#PWR?" H 7330 3240 50  0001 C CNN
+F 1 "GNDREF" H 7335 3317 50  0000 C CNN
+F 2 "" H 7330 3490 50  0001 C CNN
+F 3 "" H 7330 3490 50  0001 C CNN
+	1    7330 3490
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	7330 3490 7330 3410
+Wire Wire Line
+	7910 3450 8020 3450
+Wire Wire Line
+	7910 3550 8020 3550
+Wire Wire Line
+	7910 3650 8020 3650
+Wire Wire Line
+	7910 3750 8020 3750
+Text GLabel 7910 3450 0    50   Input ~ 0
+RTS0
+Text GLabel 7910 3550 0    50   Input ~ 0
+CTS0
+Text GLabel 7910 3650 0    50   Input ~ 0
+RXD0
+Text GLabel 7910 3750 0    50   Input ~ 0
+TXD0
+Wire Wire Line
+	7910 4150 8020 4150
+Wire Wire Line
+	7910 4250 8020 4250
+Wire Wire Line
+	7910 3950 8020 3950
+Wire Wire Line
+	7910 4050 8020 4050
+Text GLabel 7910 4150 0    50   Input ~ 0
+RTS1
+Text GLabel 7910 4250 0    50   Input ~ 0
+CTS1
+Text GLabel 7910 3950 0    50   Input ~ 0
+RXD1
+Text GLabel 7910 4050 0    50   Input ~ 0
+TXD1
+NoConn ~ 8020 3250
+NoConn ~ 8020 3350
+NoConn ~ 8020 3050
+NoConn ~ 8020 4350
+$EndSCHEMATC
