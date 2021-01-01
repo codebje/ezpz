@@ -33,6 +33,8 @@ A last-minute addition is an Ethernet PHY IC and RJ45 socket. Driving Ethernet f
 
 The RJ45 port also has two built-in LEDs, green and yellow inverse parallel. The DP83848C has three LED outputs: by default, link status, 10/100Mbit status, and activity. I did a somewhat [experimental arrangement of MOSFETs][LEDs] to try to arrange for one LED to be green for a 100Mbit link, yellow for a 10Mbit link, and unlit for no link. Fingers crossed I won't fry anything with this.
 
+https://au.rs-online.com/web/p/lan-ethernet-transformers/1349359
+
 ## Power budget
 
 | Component     | Consumption   |

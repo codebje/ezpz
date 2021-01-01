@@ -15,6 +15,7 @@ The name is the obvious pun, forgoing Australian pronunciation of 'Z' to get a c
 ## The sub-projects
 
   - [ezpz-main](ezpz-main) describes the main board.
+  - [stm32-usb](stm32-usb) contains the USB interface IC project.
 
 ## Decision log
 
