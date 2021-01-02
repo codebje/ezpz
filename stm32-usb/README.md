@@ -98,12 +98,16 @@ https://www.beyondlogic.org/usbnutshell/usb1.shtml
   - What `EP_TYPE` is set by the template CDC code? 
   - How is the buffer descriptor table assembled? By calling `HAL_PCD_EP_Open()`, after having configured the endpoint in `usbd_conf.c:USBD_LL_Init()`.
 
+## Changes made
+
+  1. The STM32L073 only supports USB Full Speed. There's code to support some parts of High Speed, but they're unreachable. Removing the high speed and other-speed configuration descriptors and associated callbacks and invocations reduces code complexity.
+
 ## Task sheet
 
   - [x] Configure peripherals in CubeMX
   - [x] Relocate USB middleware to prevent overwrites
   - [ ] Update middleware to support three CDC interfaces
-      - [ ] Remove superfluous high-speed code
+      - [x] Remove superfluous high-speed code
       - [ ] Modify device descriptor
       - [ ] Modify configurations
       - [ ] Change USB device design to support multiple interfaces
