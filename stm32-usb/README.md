@@ -100,8 +100,14 @@ https://www.beyondlogic.org/usbnutshell/usb1.shtml
 
 ## Changes made
 
-  1. The STM32L073 only supports USB Full Speed. There's code to support some parts of High Speed, but they're unreachable. Removing the high speed and other-speed configuration descriptors and associated callbacks and invocations reduces code complexity.
-  2. Change `usbd_desc.c:USBD_FS_DeviceDesc[]` to the Composite class.
+ 1. The STM32L073 only supports USB Full Speed. There's code to support some parts of High Speed, but they're unreachable. Removing the high speed and other-speed configuration descriptors and associated callbacks and invocations reduces code complexity.
+ 2. Change `usbd_desc.c:USBD_FS_DeviceDesc[]` to the Composite class.
+ 3. Change the configuration descriptor:
+      - Change to bus powered
+      - Change to 500mA max power
+      - Change to Composite Device Class
+      - Add an IAD for VCP 1
+ 4. Remove the USB middleware to prevent compilation conflicts. Header files need to change, and STM32CubeIDE isn't built to allow deep modifications of middleware. Turning it off creates `HAL_PCD_MspInit()` and `HAL_PCD_MspDeInit()` functions in Core that need adustments within user code areas.
 
 ## Task sheet
 

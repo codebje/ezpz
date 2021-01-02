@@ -110,6 +110,7 @@ extern "C" {
 #define  USB_DESC_TYPE_ENDPOINT                         0x05U
 #define  USB_DESC_TYPE_DEVICE_QUALIFIER                 0x06U
 #define  USB_DESC_TYPE_OTHER_SPEED_CONFIGURATION        0x07U
+#define  USB_DESC_TYPE_INTERFACE_ASSOCIATION			0x0BU
 #define  USB_DESC_TYPE_BOS                              0x0FU
 
 #define USB_CONFIG_REMOTE_WAKEUP                        0x02U

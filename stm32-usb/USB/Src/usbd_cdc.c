@@ -174,8 +174,19 @@ __ALIGN_BEGIN uint8_t USBD_CDC_CfgFSDesc[USB_CDC_CONFIG_DESC_SIZ] __ALIGN_END =
   0x02,   /* bNumInterfaces: 2 interface */
   0x01,   /* bConfigurationValue: Configuration value */
   0x00,   /* iConfiguration: Index of string descriptor describing the configuration */
-  0xC0,   /* bmAttributes: self powered */
-  0x32,   /* MaxPower 0 mA */
+  0x80,   /* bmAttributes: bus powered */
+  0xFA,   /* MaxPower 500 mA */
+
+  /*---------------------------------------------------------------------------*/
+  /* Interface Association Descriptor: CDC interface #1 */
+  0x08, 	/* bLength */
+  USB_DESC_TYPE_INTERFACE_ASSOCIATION, /* bDescriptorType: Interface Association */
+  0x00,		/* bFirstInterface */
+  0x02,		/* bInterfaceCount */
+  0x02,		/* bFunctionClass: Communications Device Class */
+  0x02,		/* bFunctionSubClass: Abstract Control Model */
+  0x00,		/* bFunctionProtocol: none */
+  0x00,		/* iFunction: Index of string descriptor describing the function */
 
   /*---------------------------------------------------------------------------*/
 
