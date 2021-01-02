@@ -101,6 +101,7 @@ https://www.beyondlogic.org/usbnutshell/usb1.shtml
 ## Changes made
 
   1. The STM32L073 only supports USB Full Speed. There's code to support some parts of High Speed, but they're unreachable. Removing the high speed and other-speed configuration descriptors and associated callbacks and invocations reduces code complexity.
+  2. Change `usbd_desc.c:USBD_FS_DeviceDesc[]` to the Composite class.
 
 ## Task sheet
 
@@ -108,7 +109,7 @@ https://www.beyondlogic.org/usbnutshell/usb1.shtml
   - [x] Relocate USB middleware to prevent overwrites
   - [ ] Update middleware to support three CDC interfaces
       - [x] Remove superfluous high-speed code
-      - [ ] Modify device descriptor
+      - [x] Modify device descriptor
       - [ ] Modify configurations
       - [ ] Change USB device design to support multiple interfaces
           - [ ] `usbd_cdc.c:USBD_CDC_DeInit()` switches off endpoints
