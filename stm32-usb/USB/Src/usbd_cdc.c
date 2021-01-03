@@ -575,7 +575,6 @@ static uint8_t  USBD_CDC_Setup(USBD_HandleTypeDef *pdev,
         }
         else
         {
-        	printf("Preparing Rx for Setup request\r\n");
           hcdc->CmdOpCode = req->bRequest;
           hcdc->CmdLength = (uint8_t)req->wLength;
           hcdc->CmdRecipient = req->bmRequest & USB_REQ_RECIPIENT_MASK;
@@ -719,10 +718,8 @@ static uint8_t  USBD_CDC_EP0_RxReady(USBD_HandleTypeDef *pdev)
 {
   USBD_CDC_HandleTypeDef   *hcdc = (USBD_CDC_HandleTypeDef *) pdev->pClassData;
 
-  printf("USBD_CDC_EP0_RxReady()\r\n");
   if ((pdev->pUserData != NULL) && (hcdc->CmdOpCode != 0xFFU))
   {
-	  printf("Invoking Control()\r\n");
     ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Control(hcdc->CmdOpCode,
     												  hcdc->CmdRecipient,
 													  hcdc->CmdIndex,

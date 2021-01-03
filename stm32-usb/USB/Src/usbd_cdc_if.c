@@ -82,6 +82,10 @@
   * @}
   */
 
+extern USBD_HandleTypeDef hUsbDeviceFS;
+extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart2;
+
 /** @defgroup USBD_CDC_IF_Private_Variables USBD_CDC_IF_Private_Variables
   * @brief Private variables.
   * @{
@@ -107,8 +111,6 @@ uint8_t UserTxBufferFS[3][APP_TX_DATA_SIZE];
   * @{
   */
 
-extern USBD_HandleTypeDef hUsbDeviceFS;
-
 /* USER CODE BEGIN EXPORTED_VARIABLES */
 
 /* USER CODE END EXPORTED_VARIABLES */
@@ -126,6 +128,7 @@ static int8_t CDC_Init_FS(USBD_CDC_Function function);
 static int8_t CDC_DeInit_FS(USBD_CDC_Function function);
 static int8_t CDC_Control_FS(uint8_t cmd, uint8_t recipient, uint16_t index, uint8_t *pbuf, uint16_t length);
 static int8_t CDC_Receive_FS(uint8_t* pbuf, uint32_t *Len, USBD_CDC_Function function);
+static void CDC_UART_SetLineCoding(UART_HandleTypeDef *uart, uint32_t bps, uint8_t stop, uint8_t parity, uint8_t data);
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_DECLARATION */
 
@@ -221,8 +224,16 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t recipient, uint16_t index, uin
   /* 6      | bDataBits  |   1   | Number Data bits (5, 6, 7, 8 or 16).          */
   /*******************************************************************************/
     case CDC_SET_LINE_CODING:
-    	printf("CDC_SET_LINE_CODING: %lubps, %u stop bits, %u parity, %u data bits\r\n",
-    			*((uint32_t *)pbuf), pbuf[4], pbuf[5], pbuf[6]);
+    	switch (CDC_IF_FN(index)) {
+    		case CDC1:
+    			CDC_UART_SetLineCoding(&huart1, *((uint32_t *)pbuf), pbuf[4], pbuf[5], pbuf[6]);
+    			break;
+    		case CDC2:
+    			CDC_UART_SetLineCoding(&huart2, *((uint32_t *)pbuf), pbuf[4], pbuf[5], pbuf[6]);
+    			break;
+    		default:
+    			break;
+    	}
 
     break;
 
@@ -296,6 +307,102 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len, USBD_CDC_Function function)
 }
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
+
+static void CDC_UART_SetLineCoding(UART_HandleTypeDef *uart, uint32_t bps, uint8_t stop, uint8_t parity, uint8_t data)
+{
+	uint32_t cr1 = uart->Instance->CR1 & ~USART_CR1_UE;
+
+	// disable the interface by resetting UE
+	uart->Instance->CR1 = cr1;
+
+	// clear out data bits and parity settings
+	cr1 &= ~(USART_CR1_M_Msk | USART_CR1_PS_Msk | USART_CR1_PCE_Msk);
+
+	// mark and space are not supported, it's odd/even/none only
+	switch (parity) {
+		case 1:
+			cr1 |= UART_PARITY_ODD;
+			break;
+		case 2:
+			cr1 |= UART_PARITY_EVEN;
+			break;
+		default:
+			break;
+	}
+
+	// 7, 8, 9 supported: anything else falls back to 8 data bits
+	switch (data) {
+		case 7:
+			cr1 |= UART_WORDLENGTH_7B;
+			break;
+		case 9:
+			cr1 |= UART_WORDLENGTH_9B;
+			break;
+		default:
+			cr1 |= UART_WORDLENGTH_8B;
+			break;
+	}
+
+	// write new settings
+	uart->Instance->CR1 = cr1;
+
+	// all legal options supported, illegal values fall back to one stop bit
+	switch (stop) {
+		case 1:
+			MODIFY_REG(uart->Instance->CR2, USART_CR2_STOP_Msk, UART_STOPBITS_1_5);
+			break;
+		case 2:
+			MODIFY_REG(uart->Instance->CR2, USART_CR2_STOP_Msk, UART_STOPBITS_2);
+			break;
+		default:
+			MODIFY_REG(uart->Instance->CR2, USART_CR2_STOP_Msk, UART_STOPBITS_1);
+			break;
+	}
+
+	// Determine the clock source
+	UART_ClockSourceTypeDef clocksource;
+	uint32_t pclk;
+	UART_GETCLOCKSOURCE(uart, clocksource);
+	switch (clocksource) {
+		case UART_CLOCKSOURCE_PCLK1:
+			pclk = HAL_RCC_GetPCLK1Freq();
+			break;
+	    case UART_CLOCKSOURCE_PCLK2:
+	        pclk = HAL_RCC_GetPCLK2Freq();
+	        break;
+	    case UART_CLOCKSOURCE_HSI:
+	        if (__HAL_RCC_GET_FLAG(RCC_FLAG_HSIDIV) != 0U) {
+	            pclk = (uint32_t)(HSI_VALUE >> 2U);
+	        } else {
+	            pclk = (uint32_t) HSI_VALUE;
+	        }
+	        break;
+	    case UART_CLOCKSOURCE_SYSCLK:
+	        pclk = HAL_RCC_GetSysClockFreq();
+	        break;
+	    case UART_CLOCKSOURCE_LSE:
+	        pclk = (uint32_t) LSE_VALUE;
+	        break;
+	    default:
+	        pclk = 0U;
+	        break;
+	}
+
+	// Set the BRR. This does not support the LPUART.
+	if (pclk != 0U) {
+		uint16_t usartdiv = cr1 & USART_CR1_OVER8 ? UART_DIV_SAMPLING8(pclk, bps) : UART_DIV_SAMPLING16(pclk, bps);
+	    if (usartdiv >= 16) {
+	    	if (cr1 & USART_CR1_OVER8) {
+	    		usartdiv = (usartdiv & 0xfff0) | ((usartdiv & 0xf) >> 1);
+	    	}
+	        uart->Instance->BRR = usartdiv;
+	   }
+	}
+
+	// Re-enable the UART
+	uart->Instance->CR1 = cr1 | USART_CR1_UE;
+
+}
 
 /* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */
 

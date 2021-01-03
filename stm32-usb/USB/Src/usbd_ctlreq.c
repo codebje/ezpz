@@ -116,9 +116,6 @@ USBD_StatusTypeDef  USBD_StdDevReq(USBD_HandleTypeDef *pdev,
 {
   USBD_StatusTypeDef ret = USBD_OK;
 
-  printf("USBD_StdDevReq(bmRequest=%02x, bRequest=%02x, wIndex=%04x, wLength=%d, wValue=%04x)\r\n",
-		  req->bmRequest, req->bRequest, req->wIndex, req->wLength, req->wValue);
-
   switch (req->bmRequest & USB_REQ_TYPE_MASK)
   {
     case USB_REQ_TYPE_CLASS:
@@ -183,9 +180,6 @@ USBD_StatusTypeDef  USBD_StdItfReq(USBD_HandleTypeDef *pdev,
 {
   USBD_StatusTypeDef ret = USBD_OK;
 
-  printf("USBD_StdItfReq(bmRequest=%02x, bRequest=%02x, wIndex=%04x, wLength=%d, wValue=%04x)\r\n",
-		  req->bmRequest, req->bRequest, req->wIndex, req->wLength, req->wValue);
-
   switch (req->bmRequest & USB_REQ_TYPE_MASK)
   {
     case USB_REQ_TYPE_CLASS:
@@ -240,9 +234,6 @@ USBD_StatusTypeDef  USBD_StdEPReq(USBD_HandleTypeDef *pdev,
   uint8_t   ep_addr;
   USBD_StatusTypeDef ret = USBD_OK;
   ep_addr  = LOBYTE(req->wIndex);
-
-  printf("USBD_StdEPReq(bmRequest=%02x, bRequest=%02x, wIndex=%04x, wLength=%d, wValue=%04x)\r\n",
-		  req->bmRequest, req->bRequest, req->wIndex, req->wLength, req->wValue);
 
   switch (req->bmRequest & USB_REQ_TYPE_MASK)
   {

@@ -121,7 +121,8 @@ https://www.beyondlogic.org/usbnutshell/usb1.shtml
       - Modify `USBD_CDC_Setup` to pass through recipient and index data
       - Modify `USBD_LL_Init` to set up the PMA memory map
       - Update `USBD_MAX_NUM_INTERFACES`
-  6. Get rid of more 
+  6. Get rid of more high-speed noise
+  7. Implement line coding for UART1, UART2
 
 ## Task sheet
 
@@ -132,7 +133,7 @@ https://www.beyondlogic.org/usbnutshell/usb1.shtml
       - [x] Modify device descriptor
       - [x] Modify configurations
       - [x] Change USB device design to support multiple interfaces
-  - [ ] Support changing line configuration
+  - [x] Support changing line configuration
   - [ ] Wire up two CDCs to UARTs
-  - [ ] Implement ZDI
   - [ ] Implement a debug monitor on the third CDC
+  - [ ] Implement ZDI
