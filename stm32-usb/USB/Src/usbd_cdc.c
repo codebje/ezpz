@@ -119,23 +119,6 @@ static uint8_t  USBD_CDC_EP0_RxReady(USBD_HandleTypeDef *pdev);
 
 static uint8_t  *USBD_CDC_GetFSCfgDesc(uint16_t *length);
 
-uint8_t  *USBD_CDC_GetDeviceQualifierDescriptor(uint16_t *length);
-
-/* USB Standard Device Descriptor */
-__ALIGN_BEGIN static uint8_t USBD_CDC_DeviceQualifierDesc[USB_LEN_DEV_QUALIFIER_DESC] __ALIGN_END =
-{
-  USB_LEN_DEV_QUALIFIER_DESC,
-  USB_DESC_TYPE_DEVICE_QUALIFIER,
-  0x00,
-  0x02,
-  0x00,
-  0x00,
-  0x00,
-  0x40,
-  0x01,
-  0x00,
-};
-
 /**
   * @}
   */
@@ -159,7 +142,6 @@ USBD_ClassTypeDef  USBD_CDC =
   NULL,
   NULL,
   USBD_CDC_GetFSCfgDesc,
-  USBD_CDC_GetDeviceQualifierDescriptor,
 };
 
 /* USB CDC device Configuration Descriptor */
@@ -760,18 +742,6 @@ static uint8_t  *USBD_CDC_GetFSCfgDesc(uint16_t *length)
 {
   *length = sizeof(USBD_CDC_CfgFSDesc);
   return USBD_CDC_CfgFSDesc;
-}
-
-/**
-* @brief  DeviceQualifierDescriptor
-*         return Device Qualifier descriptor
-* @param  length : pointer data length
-* @retval pointer to descriptor buffer
-*/
-uint8_t  *USBD_CDC_GetDeviceQualifierDescriptor(uint16_t *length)
-{
-  *length = sizeof(USBD_CDC_DeviceQualifierDesc);
-  return USBD_CDC_DeviceQualifierDesc;
 }
 
 /**

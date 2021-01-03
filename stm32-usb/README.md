@@ -126,10 +126,10 @@ https://www.beyondlogic.org/usbnutshell/usb1.shtml
 
   - [x] Configure peripherals in CubeMX
   - [x] Relocate USB middleware to prevent overwrites
-  - [ ] Update middleware to support three CDC interfaces
+  - [x] Update middleware to support three CDC interfaces
       - [x] Remove superfluous high-speed code
       - [x] Modify device descriptor
-      - [ ] Modify configurations
+      - [x] Modify configurations
       - [x] Change USB device design to support multiple interfaces
   - [ ] Support changing line configuration
   - [ ] Wire up two CDCs to UARTs

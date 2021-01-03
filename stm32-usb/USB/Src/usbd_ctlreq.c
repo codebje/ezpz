@@ -409,8 +409,6 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev,
   uint8_t *pbuf = NULL;
   uint8_t err = 0U;
 
-  printf("Get descriptor: %02x\r\n", req->wValue >> 8);
-
   switch (req->wValue >> 8)
   {
 #if (USBD_LPM_ENABLED == 1U)
@@ -431,16 +429,8 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev,
       break;
 
     case USB_DESC_TYPE_CONFIGURATION:
-      if (pdev->dev_speed == USBD_SPEED_HIGH)
-      {
-          USBD_CtlError(pdev, req);
-          err++;
-      }
-      else
-      {
-        pbuf = pdev->pClass->GetFSConfigDescriptor(&len);
-        pbuf[1] = USB_DESC_TYPE_CONFIGURATION;
-      }
+      pbuf = pdev->pClass->GetFSConfigDescriptor(&len);
+      pbuf[1] = USB_DESC_TYPE_CONFIGURATION;
       break;
 
     case USB_DESC_TYPE_STRING:
@@ -538,15 +528,8 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev,
       break;
 
     case USB_DESC_TYPE_DEVICE_QUALIFIER:
-      if (pdev->dev_speed == USBD_SPEED_HIGH)
-      {
-        pbuf = pdev->pClass->GetDeviceQualifierDescriptor(&len);
-      }
-      else
-      {
-        USBD_CtlError(pdev, req);
-        err++;
-      }
+      USBD_CtlError(pdev, req);
+      err++;
       break;
 
     case USB_DESC_TYPE_OTHER_SPEED_CONFIGURATION:
