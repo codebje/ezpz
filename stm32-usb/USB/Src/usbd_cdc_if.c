@@ -221,6 +221,8 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t recipient, uint16_t index, uin
   /* 6      | bDataBits  |   1   | Number Data bits (5, 6, 7, 8 or 16).          */
   /*******************************************************************************/
     case CDC_SET_LINE_CODING:
+    	printf("CDC_SET_LINE_CODING: %lubps, %u stop bits, %u parity, %u data bits\r\n",
+    			*((uint32_t *)pbuf), pbuf[4], pbuf[5], pbuf[6]);
 
     break;
 

@@ -120,6 +120,7 @@ https://www.beyondlogic.org/usbnutshell/usb1.shtml
       - Modify `USBD_CDC_DeInit` to close all functions' endpoints
       - Modify `USBD_CDC_Setup` to pass through recipient and index data
       - Modify `USBD_LL_Init` to set up the PMA memory map
+      - Update `USBD_MAX_NUM_INTERFACES`
   6. Get rid of more 
 
 ## Task sheet

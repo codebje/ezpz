@@ -111,8 +111,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	HAL_Delay(300);
-//	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+	// TODO get command line from USB CDC3
+	// TODO process command
+	// TODO transfer output to USB
   }
   /* USER CODE END 3 */
 }
@@ -196,6 +197,7 @@ static void MX_USART1_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART1_Init 2 */
+//  UART_DIV_SAMPLING16(HAL_RCC_GetPCLK1Freq(), 115200);
 
   /* USER CODE END USART1_Init 2 */
 
@@ -285,9 +287,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = ZDI_ZDA_Pin|ZDI_ZCL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-  GPIO_InitStruct.Pin = LED_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
