@@ -41,9 +41,11 @@ extern "C" {
 /** @defgroup usbd_cdc_Exported_Defines
   * @{
   */
-#define CDC_IN_EP                                   0x81U  /* EP1 for data IN */
-#define CDC_OUT_EP                                  0x01U  /* EP1 for data OUT */
-#define CDC_CMD_EP                                  0x82U  /* EP2 for CDC commands */
+#define CDC_IN_EP(fn)								(0x81U + fn*2)		/* Data IN */
+#define CDC_OUT_EP(fn)								(0x01U + fn*2)		/* Data OUT */
+#define CDC_CMD_EP(fn)								(0x82U + fn*2)		/* CDC commands */
+#define CDC_EP_FN(ep)								(((ep & 0xF) - 1) >> 1)
+#define CDC_IF_FN(iface)							(iface >> 1)
 
 #ifndef CDC_HS_BINTERVAL
 #define CDC_HS_BINTERVAL                          0x10U
@@ -58,7 +60,7 @@ extern "C" {
 #define CDC_DATA_FS_MAX_PACKET_SIZE                 64U  /* Endpoint IN & OUT Packet size */
 #define CDC_CMD_PACKET_SIZE                         8U  /* Control Endpoint Packet size */
 
-#define USB_CDC_CONFIG_DESC_SIZ                     75U
+#define USB_CDC_CONFIG_DESC_SIZ                     207U
 #define CDC_DATA_HS_IN_PACKET_SIZE                  CDC_DATA_HS_MAX_PACKET_SIZE
 #define CDC_DATA_HS_OUT_PACKET_SIZE                 CDC_DATA_HS_MAX_PACKET_SIZE
 
@@ -90,6 +92,13 @@ extern "C" {
 /**
   * @}
   */
+
+typedef enum {
+	CDC1 = 0,
+	CDC2,
+	CDC3,
+} USBD_CDC_Function;
+
 typedef struct
 {
   uint32_t bitrate;
@@ -100,30 +109,32 @@ typedef struct
 
 typedef struct _USBD_CDC_Itf
 {
-  int8_t (* Init)(void);
-  int8_t (* DeInit)(void);
-  int8_t (* Control)(uint8_t cmd, uint8_t *pbuf, uint16_t length);
-  int8_t (* Receive)(uint8_t *Buf, uint32_t *Len);
+  int8_t (* Init)(USBD_CDC_Function function);
+  int8_t (* DeInit)(USBD_CDC_Function function);
+  int8_t (* Control)(uint8_t cmd, uint8_t recipient, uint16_t index, uint8_t *pbuf, uint16_t length);
+  int8_t (* Receive)(uint8_t *Buf, uint32_t *Len, USBD_CDC_Function function);
 
 } USBD_CDC_ItfTypeDef;
 
 
 typedef struct
 {
-  uint32_t data[CDC_DATA_HS_MAX_PACKET_SIZE / 4U];      /* Force 32bits alignment */
-  uint8_t  CmdOpCode;
-  uint8_t  CmdLength;
-  uint8_t  *RxBuffer;
-  uint8_t  *TxBuffer;
-  uint32_t RxLength;
-  uint32_t TxLength;
+	uint32_t data[CDC_DATA_HS_MAX_PACKET_SIZE / 4U];      /* Force 32bits alignment */
+	uint8_t  CmdOpCode;
+	uint8_t  CmdLength;
+	uint8_t  CmdRecipient;
+	uint16_t CmdIndex;
+	struct {
+		uint8_t  *RxBuffer;
+		uint8_t  *TxBuffer;
+		uint32_t RxLength;
+		uint32_t TxLength;
 
-  __IO uint32_t TxState;
-  __IO uint32_t RxState;
+		__IO uint32_t TxState;
+		__IO uint32_t RxState;
+	} function[3];
 }
 USBD_CDC_HandleTypeDef;
-
-
 
 /** @defgroup USBD_CORE_Exported_Macros
   * @{
@@ -151,14 +162,16 @@ uint8_t  USBD_CDC_RegisterInterface(USBD_HandleTypeDef   *pdev,
 
 uint8_t  USBD_CDC_SetTxBuffer(USBD_HandleTypeDef   *pdev,
                               uint8_t  *pbuff,
-                              uint16_t length);
+                              uint16_t length,
+							  USBD_CDC_Function function);
 
 uint8_t  USBD_CDC_SetRxBuffer(USBD_HandleTypeDef   *pdev,
-                              uint8_t  *pbuff);
+                              uint8_t  *pbuff,
+							  USBD_CDC_Function function);
 
-uint8_t  USBD_CDC_ReceivePacket(USBD_HandleTypeDef *pdev);
+uint8_t  USBD_CDC_ReceivePacket(USBD_HandleTypeDef *pdev, USBD_CDC_Function function);
 
-uint8_t  USBD_CDC_TransmitPacket(USBD_HandleTypeDef *pdev);
+uint8_t  USBD_CDC_TransmitPacket(USBD_HandleTypeDef *pdev, USBD_CDC_Function function);
 /**
   * @}
   */

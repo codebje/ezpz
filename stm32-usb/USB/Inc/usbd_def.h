@@ -113,6 +113,12 @@ extern "C" {
 #define  USB_DESC_TYPE_INTERFACE_ASSOCIATION			0x0BU
 #define  USB_DESC_TYPE_BOS                              0x0FU
 
+#define  USB_CLASS_CIC									0x02U
+#define  USB_CLASS_CIC_SUBCLASS_ACM						0x02U
+#define  USB_CLASS_CIC_PROTOCOL_NONE					0x00U
+#define  USB_CLASS_CIC_PROTOCOL_ITUV250					0x01U
+#define  USB_CLASS_CDC									0x0AU
+
 #define USB_CONFIG_REMOTE_WAKEUP                        0x02U
 #define USB_CONFIG_SELF_POWERED                         0x01U
 

@@ -89,10 +89,10 @@
 /* Create buffer for reception and transmission           */
 /* It's up to user to redefine and/or remove those define */
 /** Received data over USB are stored in this buffer      */
-uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
+uint8_t UserRxBufferFS[3][APP_RX_DATA_SIZE];
 
 /** Data to send over USB CDC are stored in this buffer   */
-uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
+uint8_t UserTxBufferFS[3][APP_TX_DATA_SIZE];
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
 
@@ -122,10 +122,10 @@ extern USBD_HandleTypeDef hUsbDeviceFS;
   * @{
   */
 
-static int8_t CDC_Init_FS(void);
-static int8_t CDC_DeInit_FS(void);
-static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length);
-static int8_t CDC_Receive_FS(uint8_t* pbuf, uint32_t *Len);
+static int8_t CDC_Init_FS(USBD_CDC_Function function);
+static int8_t CDC_DeInit_FS(USBD_CDC_Function function);
+static int8_t CDC_Control_FS(uint8_t cmd, uint8_t recipient, uint16_t index, uint8_t *pbuf, uint16_t length);
+static int8_t CDC_Receive_FS(uint8_t* pbuf, uint32_t *Len, USBD_CDC_Function function);
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_DECLARATION */
 
@@ -146,23 +146,25 @@ USBD_CDC_ItfTypeDef USBD_Interface_fops_FS =
 /* Private functions ---------------------------------------------------------*/
 /**
   * @brief  Initializes the CDC media low layer over the FS USB IP
+  * @param  function: CDC function code
   * @retval USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t CDC_Init_FS(void)
+static int8_t CDC_Init_FS(USBD_CDC_Function function)
 {
   /* USER CODE BEGIN 3 */
   /* Set Application Buffers */
-  USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 0);
-  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
+  USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS[function], 0, function);
+  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS[function], function);
   return (USBD_OK);
   /* USER CODE END 3 */
 }
 
 /**
   * @brief  DeInitializes the CDC media low layer
+  * @param  function: CDC function code
   * @retval USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t CDC_DeInit_FS(void)
+static int8_t CDC_DeInit_FS(USBD_CDC_Function function)
 {
   /* USER CODE BEGIN 4 */
   return (USBD_OK);
@@ -176,7 +178,7 @@ static int8_t CDC_DeInit_FS(void)
   * @param  length: Number of data to be sent (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
+static int8_t CDC_Control_FS(uint8_t cmd, uint8_t recipient, uint16_t index, uint8_t *pbuf, uint16_t length)
 {
   /* USER CODE BEGIN 5 */
   switch(cmd)
@@ -257,11 +259,11 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   * @param  Len: Number of data received (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
+static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len, USBD_CDC_Function function)
 {
   /* USER CODE BEGIN 6 */
-  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
-  USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0], function);
+  USBD_CDC_ReceivePacket(&hUsbDeviceFS, function);
   return (USBD_OK);
   /* USER CODE END 6 */
 }
@@ -277,16 +279,16 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   * @param  Len: Number of data to be sent (in bytes)
   * @retval USBD_OK if all operations are OK else USBD_FAIL or USBD_BUSY
   */
-uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len)
+uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len, USBD_CDC_Function function)
 {
   uint8_t result = USBD_OK;
   /* USER CODE BEGIN 7 */
   USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
-  if (hcdc->TxState != 0){
+  if (hcdc->function[function].TxState != 0){
     return USBD_BUSY;
   }
-  USBD_CDC_SetTxBuffer(&hUsbDeviceFS, Buf, Len);
-  result = USBD_CDC_TransmitPacket(&hUsbDeviceFS);
+  USBD_CDC_SetTxBuffer(&hUsbDeviceFS, Buf, Len, function);
+  result = USBD_CDC_TransmitPacket(&hUsbDeviceFS, function);
   /* USER CODE END 7 */
   return result;
 }

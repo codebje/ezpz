@@ -294,13 +294,34 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   HAL_PCD_RegisterIsoInIncpltCallback(&hpcd_USB_FS, PCD_ISOINIncompleteCallback);
 #endif /* USE_HAL_PCD_REGISTER_CALLBACKS */
   /* USER CODE BEGIN EndPoint_Configuration */
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x00 , PCD_SNG_BUF, 0x18);
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x80 , PCD_SNG_BUF, 0x58);
+  /* PMA memory map:
+   *  0000 - 003F		BTABLE
+   *  0040 - 007F	00	EP0 OUT - control
+   *  0080 - 00BF	80	EP0 IN  - control
+   *  00C0 - 00C7	82	EP2 IN  - CDC1 interrupt
+   *  00D0 - 00D7   84	EP4 IN  - CDC2 interrupt
+   *  00E0 - 00E7   86 	EP6 IN  - CDC3 interrupt
+   *  0100 - 013F	01	EP1 OUT - CDC1 data
+   *  0140 - 017F	81	EP1 IN	- CDC1 data
+   *  0180 - 01BF	03	EP3 OUT	- CDC2 data
+   *  01C0 - 01FF	83	EP3 IN  - CDC2 data
+   *  0200 - 023F   05	EP5 OUT - CDC3 data
+   *  0240 - 027F   85	EP5 IN  - CDC3 data
+   */
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x00 , PCD_SNG_BUF, 0x40);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x80 , PCD_SNG_BUF, 0x80);
   /* USER CODE END EndPoint_Configuration */
   /* USER CODE BEGIN EndPoint_Configuration_CDC */
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x81 , PCD_SNG_BUF, 0xC0);
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x01 , PCD_SNG_BUF, 0x110);
-  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x82 , PCD_SNG_BUF, 0x100);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x82 , PCD_SNG_BUF, 0xC0);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x84 , PCD_SNG_BUF, 0xD0);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x86 , PCD_SNG_BUF, 0xE0);
+
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x01 , PCD_SNG_BUF, 0x100);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x81 , PCD_SNG_BUF, 0x140);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x03 , PCD_SNG_BUF, 0x180);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x83 , PCD_SNG_BUF, 0x1C0);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x05 , PCD_SNG_BUF, 0x200);
+  HAL_PCDEx_PMAConfig((PCD_HandleTypeDef*)pdev->pData , 0x85 , PCD_SNG_BUF, 0x240);
   /* USER CODE END EndPoint_Configuration_CDC */
   return USBD_OK;
 }

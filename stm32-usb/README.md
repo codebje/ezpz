@@ -108,6 +108,19 @@ https://www.beyondlogic.org/usbnutshell/usb1.shtml
       - Change to Composite Device Class
       - Add an IAD for VCP 1
  4. Remove the USB middleware to prevent compilation conflicts. Header files need to change, and STM32CubeIDE isn't built to allow deep modifications of middleware. Turning it off creates `HAL_PCD_MspInit()` and `HAL_PCD_MspDeInit()` functions in Core that need adustments within user code areas.
+ 5. Support multiple CDC functions
+      - Add `enum USBD_CDC_Function`
+      - Modify `CDC_*_EP` macros to take an argument, add endpoint/interface to function translations
+      - Modify `struct USBD_CDC_ItfTypeDef` to pass function or control message recipient data
+      - Modify `struct USBD_CDC_HandleTypeDef` to have per-function buffers and state
+      - Modify `USBD_CDC_Set{Rx,Tx}Buffer` and `USBD_CDC_{Transmit,Receive}Packet` to support separate functions
+      - Modify `CDC_Transmit_FS` to support separate functions
+      - Add `USB_CLASS_...` defines for symbolic configuration
+      - Modify `USBD_CDC_Init` to open all functions' endpoints
+      - Modify `USBD_CDC_DeInit` to close all functions' endpoints
+      - Modify `USBD_CDC_Setup` to pass through recipient and index data
+      - Modify `USBD_LL_Init` to set up the PMA memory map
+  6. Get rid of more 
 
 ## Task sheet
 
@@ -117,11 +130,7 @@ https://www.beyondlogic.org/usbnutshell/usb1.shtml
       - [x] Remove superfluous high-speed code
       - [x] Modify device descriptor
       - [ ] Modify configurations
-      - [ ] Change USB device design to support multiple interfaces
-          - [ ] `usbd_cdc.c:USBD_CDC_DeInit()` switches off endpoints
-          - [ ] `usbd_conf.c:USBD_LL_Init()` sets up endpoints via `HAL_PCDEx_PMAConfig()`, should use class def
-          - [ ] Alter the CDC interface callback structure to have user data and de-init
-          - [ ] Alter the CDC Class to support three CDC interfaces
+      - [x] Change USB device design to support multiple interfaces
   - [ ] Support changing line configuration
   - [ ] Wire up two CDCs to UARTs
   - [ ] Implement ZDI
