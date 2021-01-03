@@ -99,6 +99,9 @@ int main(void)
   /* USER CODE BEGIN 2 */
   MX_USB_DEVICE_Init();
 
+  char *msg = "Hello world\r\n";
+  HAL_UART_Transmit(&huart2, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -109,7 +112,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	HAL_Delay(300);
-	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+//	HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
   }
   /* USER CODE END 3 */
 }

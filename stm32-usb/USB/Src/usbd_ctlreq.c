@@ -409,6 +409,8 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev,
   uint8_t *pbuf = NULL;
   uint8_t err = 0U;
 
+  printf("Get descriptor: %02x\r\n", req->wValue >> 8);
+
   switch (req->wValue >> 8)
   {
 #if (USBD_LPM_ENABLED == 1U)
@@ -564,6 +566,7 @@ static void USBD_GetDescriptor(USBD_HandleTypeDef *pdev,
   }
   else
   {
+	  printf("req->wLength == %d, len == %d\r\n", req->wLength, len);
     if ((len != 0U) && (req->wLength != 0U))
     {
       len = MIN(len, req->wLength);
