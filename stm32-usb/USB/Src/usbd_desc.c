@@ -102,9 +102,6 @@
   * @{
   */
 
-static void Get_SerialNum(void);
-static void IntToUnicode(uint32_t value, uint8_t * pbuf, uint8_t len);
-
 /**
   * @}
   */
@@ -276,7 +273,6 @@ uint8_t * USBD_FS_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *l
 uint8_t * USBD_FS_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *length)
 {
 	UNUSED(speed);
-	Get_SerialNum();	// prevent unused code warning for now; TODO remove entirely
     USBD_GetString((uint8_t *)USBD_CDC_STRING_FS, USBD_StrDesc, length);
     return USBD_StrDesc;
 }
@@ -307,55 +303,6 @@ uint8_t * USBD_FS_InterfaceStrDescriptor(USBD_SpeedTypeDef speed, uint16_t *leng
     return USBD_StrDesc;
 }
 
-/**
-  * @brief  Create the serial number string descriptor
-  * @param  None
-  * @retval None
-  */
-static void Get_SerialNum(void)
-{
-  uint32_t deviceserial0, deviceserial1, deviceserial2;
-
-  deviceserial0 = *(uint32_t *) DEVICE_ID1;
-  deviceserial1 = *(uint32_t *) DEVICE_ID2;
-  deviceserial2 = *(uint32_t *) DEVICE_ID3;
-
-  deviceserial0 += deviceserial2;
-
-  if (deviceserial0 != 0)
-  {
-    IntToUnicode(deviceserial0, &USBD_StringSerial[2], 8);
-    IntToUnicode(deviceserial1, &USBD_StringSerial[18], 4);
-  }
-}
-
-/**
-  * @brief  Convert Hex 32Bits value into char
-  * @param  value: value to convert
-  * @param  pbuf: pointer to the buffer
-  * @param  len: buffer length
-  * @retval None
-  */
-static void IntToUnicode(uint32_t value, uint8_t * pbuf, uint8_t len)
-{
-  uint8_t idx = 0;
-
-  for (idx = 0; idx < len; idx++)
-  {
-    if (((value >> 28)) < 0xA)
-    {
-      pbuf[2 * idx] = (value >> 28) + '0';
-    }
-    else
-    {
-      pbuf[2 * idx] = (value >> 28) + 'A' - 10;
-    }
-
-    value = value << 4;
-
-    pbuf[2 * idx + 1] = 0;
-  }
-}
 /**
   * @}
   */

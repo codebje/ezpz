@@ -21,6 +21,8 @@ Each CDC function has one CIC interface with one Interrupt IN endpoint, and one 
 
 There's a 1024-byte buffer available, to be shared between a 64-byte buffer descriptor table and the buffers for received and transmitted data. The control endpoints are fixed at 64 bytes of data in `usb_desc.c:USBD_FS_DeviceDesc[]` and appear to be restricted to being exactly 64 bytes for fullspeed devices. The BTABLE address is set to 0000h by the low level HAL driver.
 
+Data from the UARTs is written to a buffer. Every time a USB start-of-frame event occurs (every 1ms), the buffer is checked for pending data to be transmitted.
+
 https://www.beyondlogic.org/usbnutshell/usb1.shtml
 
 ### Modules
@@ -135,5 +137,9 @@ https://www.beyondlogic.org/usbnutshell/usb1.shtml
       - [x] Change USB device design to support multiple interfaces
   - [x] Support changing line configuration
   - [ ] Wire up two CDCs to UARTs
+      - [ ] Timer to transmit any received data via USB
+      - [ ] Rx interrupt from UART to write data to pending buffer
+      - [ ] Tx interrupt from UART to transmit any further data
+      - [ ] Function to transfer data from USB to UART buffer
   - [ ] Implement a debug monitor on the third CDC
   - [ ] Implement ZDI

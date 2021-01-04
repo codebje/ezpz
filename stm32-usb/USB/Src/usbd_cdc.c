@@ -115,6 +115,8 @@ static uint8_t  USBD_CDC_DataIn(USBD_HandleTypeDef *pdev,
 static uint8_t  USBD_CDC_DataOut(USBD_HandleTypeDef *pdev,
                                  uint8_t epnum);
 
+static uint8_t  USBD_CDC_SoF(USBD_HandleTypeDef *pdev);
+
 static uint8_t  USBD_CDC_EP0_RxReady(USBD_HandleTypeDef *pdev);
 
 static uint8_t  *USBD_CDC_GetFSCfgDesc(uint16_t *length);
@@ -138,7 +140,7 @@ USBD_ClassTypeDef  USBD_CDC =
   USBD_CDC_EP0_RxReady,
   USBD_CDC_DataIn,
   USBD_CDC_DataOut,
-  NULL,
+  USBD_CDC_SoF,
   NULL,
   NULL,
   USBD_CDC_GetFSCfgDesc,
@@ -698,7 +700,7 @@ static uint8_t  USBD_CDC_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
   NAKed till the end of the application Xfer */
   if (pdev->pClassData != NULL)
   {
-    ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Receive(hcdc->function[fn].RxBuffer, &hcdc->function[fn].RxLength, fn);
+    ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Receive(hcdc->function[fn].RxBuffer, hcdc->function[fn].RxLength, fn);
 
     return USBD_OK;
   }
@@ -706,6 +708,17 @@ static uint8_t  USBD_CDC_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
   {
     return USBD_FAIL;
   }
+}
+
+/**
+  * @brief USB_CDC_SoF
+  *        Handle Start of Frame event
+  * @param  pdev: device instance
+  * @retval	status
+  */
+static uint8_t  USBD_CDC_SoF(USBD_HandleTypeDef *pdev)
+{
+	((USBD_CDC_ItfTypeDef *)pdev->pUserData)->SoF();
 }
 
 /**

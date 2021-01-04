@@ -127,7 +127,8 @@ uint8_t UserTxBufferFS[3][APP_TX_DATA_SIZE];
 static int8_t CDC_Init_FS(USBD_CDC_Function function);
 static int8_t CDC_DeInit_FS(USBD_CDC_Function function);
 static int8_t CDC_Control_FS(uint8_t cmd, uint8_t recipient, uint16_t index, uint8_t *pbuf, uint16_t length);
-static int8_t CDC_Receive_FS(uint8_t* pbuf, uint32_t *Len, USBD_CDC_Function function);
+static int8_t CDC_Receive_FS(uint8_t* pbuf, uint32_t Len, USBD_CDC_Function function);
+static int8_t CDC_SoF_FS(void);
 static void CDC_UART_SetLineCoding(UART_HandleTypeDef *uart, uint32_t bps, uint8_t stop, uint8_t parity, uint8_t data);
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_DECLARATION */
@@ -143,7 +144,8 @@ USBD_CDC_ItfTypeDef USBD_Interface_fops_FS =
   CDC_Init_FS,
   CDC_DeInit_FS,
   CDC_Control_FS,
-  CDC_Receive_FS
+  CDC_Receive_FS,
+  CDC_SoF_FS,
 };
 
 /* Private functions ---------------------------------------------------------*/
@@ -315,6 +317,12 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len, USBD_CDC_Function function)
   result = USBD_CDC_TransmitPacket(&hUsbDeviceFS, function);
   /* USER CODE END 7 */
   return result;
+}
+
+static int8_t CDC_SoF_FS(void)
+{
+	// TODO: transmit any pending UART data
+	return (USBD_OK);
 }
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */

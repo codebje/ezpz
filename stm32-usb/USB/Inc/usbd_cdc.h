@@ -113,7 +113,7 @@ typedef struct _USBD_CDC_Itf
   int8_t (* DeInit)(USBD_CDC_Function function);
   int8_t (* Control)(uint8_t cmd, uint8_t recipient, uint16_t index, uint8_t *pbuf, uint16_t length);
   int8_t (* Receive)(uint8_t *Buf, uint32_t Len, USBD_CDC_Function function);
-
+  int8_t (* SoF)(void);
 } USBD_CDC_ItfTypeDef;
 
 
