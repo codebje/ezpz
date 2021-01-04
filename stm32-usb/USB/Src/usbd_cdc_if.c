@@ -272,13 +272,24 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t recipient, uint16_t index, uin
   * @param  Len: Number of data received (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
-static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len, USBD_CDC_Function function)
+static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t Len, USBD_CDC_Function function)
 {
-  /* USER CODE BEGIN 6 */
-  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0], function);
-  USBD_CDC_ReceivePacket(&hUsbDeviceFS, function);
-  return (USBD_OK);
-  /* USER CODE END 6 */
+	/* USER CODE BEGIN 6 */
+	switch (function)
+	{
+		case CDC1:
+			break;
+		case CDC2:
+			break;
+		case CDC3:
+			break;
+		default:
+			break;
+	}
+	USBD_CDC_SetRxBuffer(&hUsbDeviceFS, Buf, function);
+	USBD_CDC_ReceivePacket(&hUsbDeviceFS, function);
+	return (USBD_OK);
+	/* USER CODE END 6 */
 }
 
 /**
