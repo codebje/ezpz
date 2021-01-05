@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
+  * Portions <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -22,107 +22,31 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
 
-/* USER CODE BEGIN INCLUDE */
+/* Private define ------------------------------------------------------------*/
 
-/* USER CODE END INCLUDE */
+#define UART_BRIDGE_BUFFERSIZE	1024		/* use a power of two */
+#define UART_BRIDGE_PACKETCOUNT	16			/* use a power of two */
 
 /* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
+
+typedef struct
+{
+	UART_HandleTypeDef *huart;
+	USBD_CDC_Function function;
+	uint8_t usb_buffer[UART_BRIDGE_BUFFERSIZE];			/* Pending data to write to USB */
+	__IO uint16_t i_usb_write;							/* The next byte to store is here */
+	__IO uint16_t i_usb_read;							/* The next byte to transmit is here */
+	struct {
+		uint8_t data[64];								/* packet data */
+		uint32_t len;									/* packet size */
+	} uart_buffer[UART_BRIDGE_PACKETCOUNT];				/* circular buffer of packets */
+	__IO uint8_t i_uart_write;							/* next packet to receive into */
+	__IO uint8_t i_uart_read;							/* next packet to transmit */
+} UART_BridgeTypeDef;
+
 /* Private macro -------------------------------------------------------------*/
 
-/* USER CODE BEGIN PV */
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE END PV */
-
-/** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
-  * @brief Usb device library.
-  * @{
-  */
-
-/** @addtogroup USBD_CDC_IF
-  * @{
-  */
-
-/** @defgroup USBD_CDC_IF_Private_TypesDefinitions USBD_CDC_IF_Private_TypesDefinitions
-  * @brief Private types.
-  * @{
-  */
-
-/* USER CODE BEGIN PRIVATE_TYPES */
-
-/* USER CODE END PRIVATE_TYPES */
-
-/**
-  * @}
-  */
-
-/** @defgroup USBD_CDC_IF_Private_Defines USBD_CDC_IF_Private_Defines
-  * @brief Private defines.
-  * @{
-  */
-
-/* USER CODE BEGIN PRIVATE_DEFINES */
-/* USER CODE END PRIVATE_DEFINES */
-
-/**
-  * @}
-  */
-
-/** @defgroup USBD_CDC_IF_Private_Macros USBD_CDC_IF_Private_Macros
-  * @brief Private macros.
-  * @{
-  */
-
-/* USER CODE BEGIN PRIVATE_MACRO */
-
-/* USER CODE END PRIVATE_MACRO */
-
-/**
-  * @}
-  */
-
-extern USBD_HandleTypeDef hUsbDeviceFS;
-extern UART_HandleTypeDef huart1;
-extern UART_HandleTypeDef huart2;
-
-/** @defgroup USBD_CDC_IF_Private_Variables USBD_CDC_IF_Private_Variables
-  * @brief Private variables.
-  * @{
-  */
-/* Create buffer for reception and transmission           */
-/* It's up to user to redefine and/or remove those define */
-/** Received data over USB are stored in this buffer      */
-uint8_t UserRxBufferFS[3][APP_RX_DATA_SIZE];
-
-/** Data to send over USB CDC are stored in this buffer   */
-uint8_t UserTxBufferFS[3][APP_TX_DATA_SIZE];
-
-/* USER CODE BEGIN PRIVATE_VARIABLES */
-
-/* USER CODE END PRIVATE_VARIABLES */
-
-/**
-  * @}
-  */
-
-/** @defgroup USBD_CDC_IF_Exported_Variables USBD_CDC_IF_Exported_Variables
-  * @brief Public variables.
-  * @{
-  */
-
-/* USER CODE BEGIN EXPORTED_VARIABLES */
-
-/* USER CODE END EXPORTED_VARIABLES */
-
-/**
-  * @}
-  */
-
-/** @defgroup USBD_CDC_IF_Private_FunctionPrototypes USBD_CDC_IF_Private_FunctionPrototypes
-  * @brief Private functions declaration.
-  * @{
-  */
+/* Private function prototypes ------------------------------------------------*/
 
 static int8_t CDC_Init_FS(USBD_CDC_Function function);
 static int8_t CDC_DeInit_FS(USBD_CDC_Function function);
@@ -131,13 +55,20 @@ static int8_t CDC_Receive_FS(uint8_t* pbuf, uint32_t Len, USBD_CDC_Function func
 static int8_t CDC_SoF_FS(void);
 static void CDC_UART_SetLineCoding(UART_HandleTypeDef *uart, uint32_t bps, uint8_t stop, uint8_t parity, uint8_t data);
 
-/* USER CODE BEGIN PRIVATE_FUNCTIONS_DECLARATION */
+/* External variables --------------------------------------------------------*/
 
-/* USER CODE END PRIVATE_FUNCTIONS_DECLARATION */
+extern USBD_HandleTypeDef hUsbDeviceFS;
+extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart2;
 
-/**
-  * @}
-  */
+/* Private variables ---------------------------------------------------------*/
+
+UART_BridgeTypeDef bridges[2] = {
+		{ .huart = &huart1, .function = CDC1, .i_uart_write = 0, .i_uart_read = 0, .i_usb_write = 0, .i_usb_read = 0 },
+		{ .huart = &huart2, .function = CDC2, .i_uart_write = 0, .i_uart_read = 0, .i_usb_write = 0, .i_usb_read = 0 },
+};
+
+
 
 USBD_CDC_ItfTypeDef USBD_Interface_fops_FS =
 {
@@ -149,6 +80,7 @@ USBD_CDC_ItfTypeDef USBD_Interface_fops_FS =
 };
 
 /* Private functions ---------------------------------------------------------*/
+
 /**
   * @brief  Initializes the CDC media low layer over the FS USB IP
   * @param  function: CDC function code
@@ -156,12 +88,20 @@ USBD_CDC_ItfTypeDef USBD_Interface_fops_FS =
   */
 static int8_t CDC_Init_FS(USBD_CDC_Function function)
 {
-  /* USER CODE BEGIN 3 */
-  /* Set Application Buffers */
-  USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS[function], 0, function);
-  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS[function], function);
-  return (USBD_OK);
-  /* USER CODE END 3 */
+	switch (function) {
+		case CDC1:
+		case CDC2:
+			USBD_CDC_SetRxBuffer(&hUsbDeviceFS, bridges[function].uart_buffer[0].data, function);
+			USBD_CDC_ReceivePacket(&hUsbDeviceFS, function);
+			HAL_UART_Receive_IT(bridges[function].huart, bridges[function].usb_buffer, 1);
+			break;
+		case CDC3:
+			// TODO set a buffer up for CDC3
+			break;
+		default:
+			break;
+	}
+	return (USBD_OK);
 }
 
 /**
@@ -171,9 +111,7 @@ static int8_t CDC_Init_FS(USBD_CDC_Function function)
   */
 static int8_t CDC_DeInit_FS(USBD_CDC_Function function)
 {
-  /* USER CODE BEGIN 4 */
-  return (USBD_OK);
-  /* USER CODE END 4 */
+	return (USBD_OK);
 }
 
 /**
@@ -185,28 +123,22 @@ static int8_t CDC_DeInit_FS(USBD_CDC_Function function)
   */
 static int8_t CDC_Control_FS(uint8_t cmd, uint8_t recipient, uint16_t index, uint8_t *pbuf, uint16_t length)
 {
-  /* USER CODE BEGIN 5 */
-  switch(cmd)
-  {
-    case CDC_SEND_ENCAPSULATED_COMMAND:
+	switch(cmd)
+	{
+    	case CDC_SEND_ENCAPSULATED_COMMAND:
+    		break;
 
-    break;
+    	case CDC_GET_ENCAPSULATED_RESPONSE:
+    		break;
 
-    case CDC_GET_ENCAPSULATED_RESPONSE:
+    	case CDC_SET_COMM_FEATURE:
+    		break;
 
-    break;
+    	case CDC_GET_COMM_FEATURE:
+    		break;
 
-    case CDC_SET_COMM_FEATURE:
-
-    break;
-
-    case CDC_GET_COMM_FEATURE:
-
-    break;
-
-    case CDC_CLEAR_COMM_FEATURE:
-
-    break;
+    	case CDC_CLEAR_COMM_FEATURE:
+    		break;
 
   /*******************************************************************************/
   /* Line Coding Structure                                                       */
@@ -225,38 +157,34 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t recipient, uint16_t index, uin
   /*                                        4 - Space                            */
   /* 6      | bDataBits  |   1   | Number Data bits (5, 6, 7, 8 or 16).          */
   /*******************************************************************************/
-    case CDC_SET_LINE_CODING:
-    	switch (CDC_IF_FN(index)) {
-    		case CDC1:
-    			CDC_UART_SetLineCoding(&huart1, *((uint32_t *)pbuf), pbuf[4], pbuf[5], pbuf[6]);
-    			break;
-    		case CDC2:
-    			CDC_UART_SetLineCoding(&huart2, *((uint32_t *)pbuf), pbuf[4], pbuf[5], pbuf[6]);
-    			break;
-    		default:
-    			break;
-    	}
+    	case CDC_SET_LINE_CODING:
+    		switch (CDC_IF_FN(index)) {
+    			case CDC1:
+    				CDC_UART_SetLineCoding(&huart1, *((uint32_t *)pbuf), pbuf[4], pbuf[5], pbuf[6]);
+    				break;
+    			case CDC2:
+    				CDC_UART_SetLineCoding(&huart2, *((uint32_t *)pbuf), pbuf[4], pbuf[5], pbuf[6]);
+    				break;
+    			default:
+    				break;
+    		}
+    		break;
 
-    break;
+    	case CDC_GET_LINE_CODING:
+    		/* TODO allow this */
+    		break;
 
-    case CDC_GET_LINE_CODING:
+		case CDC_SET_CONTROL_LINE_STATE:
+			break;
 
-    break;
+		case CDC_SEND_BREAK:
+			break;
 
-    case CDC_SET_CONTROL_LINE_STATE:
+		default:
+			break;
+	}
 
-    break;
-
-    case CDC_SEND_BREAK:
-
-    break;
-
-  default:
-    break;
-  }
-
-  return (USBD_OK);
-  /* USER CODE END 5 */
+	return (USBD_OK);
 }
 
 /**
@@ -276,22 +204,36 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t recipient, uint16_t index, uin
   */
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t Len, USBD_CDC_Function function)
 {
-	/* USER CODE BEGIN 6 */
+
 	switch (function)
 	{
 		case CDC1:
-			break;
 		case CDC2:
+			// This will fail with HAL_BUSY if a transmit is in progress. If so, the TX ISR
+			// will continue working through the backlog of buffered data as it can.
+			HAL_UART_Transmit_IT(bridges[function].huart, Buf, Len);
+
+			bridges[function].uart_buffer[bridges[function].i_uart_write].len = Len;
+
+			// Increment the UART write pointer
+			bridges[function].i_uart_write = (bridges[function].i_uart_write + 1) % UART_BRIDGE_PACKETCOUNT;
+
+			// If there's a free packet buffer, start a new receive
+			if ((bridges[function].i_uart_write+1) % UART_BRIDGE_PACKETCOUNT != bridges[function].i_uart_read) {
+				USBD_CDC_SetRxBuffer(&hUsbDeviceFS,
+						bridges[function].uart_buffer[bridges[function].i_uart_write].data,
+						function);
+				USBD_CDC_ReceivePacket(&hUsbDeviceFS, function);
+			}
 			break;
 		case CDC3:
+			/* TODO receive CDC3 data */
 			break;
 		default:
 			break;
 	}
-	USBD_CDC_SetRxBuffer(&hUsbDeviceFS, Buf, function);
-	USBD_CDC_ReceivePacket(&hUsbDeviceFS, function);
+
 	return (USBD_OK);
-	/* USER CODE END 6 */
 }
 
 /**
@@ -307,21 +249,34 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t Len, USBD_CDC_Function funct
   */
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len, USBD_CDC_Function function)
 {
-  uint8_t result = USBD_OK;
-  /* USER CODE BEGIN 7 */
-  USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
-  if (hcdc->function[function].TxState != 0){
-    return USBD_BUSY;
-  }
-  USBD_CDC_SetTxBuffer(&hUsbDeviceFS, Buf, Len, function);
-  result = USBD_CDC_TransmitPacket(&hUsbDeviceFS, function);
-  /* USER CODE END 7 */
-  return result;
+	uint8_t result = USBD_OK;
+	USBD_CDC_HandleTypeDef *hcdc = (USBD_CDC_HandleTypeDef*)hUsbDeviceFS.pClassData;
+	if (hcdc->function[function].TxState != 0) {
+		return USBD_BUSY;
+	}
+	USBD_CDC_SetTxBuffer(&hUsbDeviceFS, Buf, Len, function);
+	result = USBD_CDC_TransmitPacket(&hUsbDeviceFS, function);
+	return result;
 }
 
 static int8_t CDC_SoF_FS(void)
 {
-	// TODO: transmit any pending UART data
+	for (USBD_CDC_Function i = CDC1; i < CDC3; i++) {
+		if (bridges[i].i_usb_read > bridges[i].i_usb_write) {
+			/* read pointer is ahead of write pointer: transmit up to end of buffer */
+			if (CDC_Transmit_FS(bridges[i].usb_buffer + bridges[i].i_usb_read,
+					UART_BRIDGE_BUFFERSIZE - bridges[i].i_usb_read, i) == USBD_OK) {
+				bridges[i].i_usb_read = 0;
+			}
+		} else if (bridges[i].i_usb_read < bridges[i].i_usb_write) {
+			/* read pointer is behind write pointer: transmit the data between them */
+			if (CDC_Transmit_FS(bridges[i].usb_buffer + bridges[i].i_usb_read,
+					bridges[i].i_usb_write - bridges[i].i_usb_read, i) == USBD_OK) {
+				bridges[i].i_usb_read = bridges[i].i_usb_write;
+			}
+		}
+	}
+
 	return (USBD_OK);
 }
 
@@ -349,13 +304,10 @@ static void CDC_UART_SetLineCoding(UART_HandleTypeDef *uart, uint32_t bps, uint8
 			break;
 	}
 
-	// 7, 8, 9 supported: anything else falls back to 8 data bits
+	// 7 & 8 supported: anything else falls back to 8 data bits
 	switch (data) {
 		case 7:
 			cr1 |= UART_WORDLENGTH_7B;
-			break;
-		case 9:
-			cr1 |= UART_WORDLENGTH_9B;
 			break;
 		default:
 			cr1 |= UART_WORDLENGTH_8B;
@@ -423,14 +375,43 @@ static void CDC_UART_SetLineCoding(UART_HandleTypeDef *uart, uint32_t bps, uint8
 
 }
 
-/* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+	UART_BridgeTypeDef *bridge = huart == &huart1 ? &bridges[0] : &bridges[1];
 
-/**
-  * @}
-  */
+	/* Recognise the data read has completed */
+	bridge->i_uart_read = (bridge->i_uart_read + 1) % UART_BRIDGE_PACKETCOUNT;
 
-/**
-  * @}
-  */
+	/* The transmit buffer is empty when the two pointers are equal */
+	if (bridge->i_uart_read != bridge->i_uart_write) {
+		/* Send the next USB packet */
+		HAL_UART_Transmit_IT(huart,
+				bridge->uart_buffer[bridge->i_uart_read].data,
+				bridge->uart_buffer[bridge->i_uart_read].len);
+	}
+}
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	UART_BridgeTypeDef *bridge = huart == &huart1 ? &bridges[0] : &bridges[1];
+
+	/* A byte has been received: increment the write pointer */
+	bridge->i_usb_write = (bridge->i_usb_write + 1) % UART_BRIDGE_BUFFERSIZE;
+
+	/* Check that there's space to receive more data */
+	if ((bridge->i_usb_write + 1) % UART_BRIDGE_BUFFERSIZE != bridge->i_usb_read) {
+		HAL_UART_Receive_IT(huart, bridge->usb_buffer + bridge->i_usb_write, 1);
+	}
+}
+
+
+/* There's not much to be done to recover from an error.
+ * One option would be to reset here with NVIC_SystemReset(), but whatever's causing the fault
+ * will have persisted and will continue to cause faults. Entering the fault handler might allow
+ * a debugger to be connected and backtrace the cause. */
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+	Error_Handler();
+}
+

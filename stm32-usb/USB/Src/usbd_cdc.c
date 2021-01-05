@@ -719,6 +719,8 @@ static uint8_t  USBD_CDC_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum)
 static uint8_t  USBD_CDC_SoF(USBD_HandleTypeDef *pdev)
 {
 	((USBD_CDC_ItfTypeDef *)pdev->pUserData)->SoF();
+
+	return (USBD_OK);
 }
 
 /**

@@ -19,11 +19,18 @@ Each CDC function has one CIC interface with one Interrupt IN endpoint, and one 
 | EP6           | UART2 CIC     |               |
 | EP7           |               |               |
 
-There's a 1024-byte buffer available, to be shared between a 64-byte buffer descriptor table and the buffers for received and transmitted data. The control endpoints are fixed at 64 bytes of data in `usb_desc.c:USBD_FS_DeviceDesc[]` and appear to be restricted to being exactly 64 bytes for fullspeed devices. The BTABLE address is set to 0000h by the low level HAL driver.
+There's a 1024-byte buffer available, to be shared between a 64-byte buffer descriptor table and the buffers for received and transmitted data. All endpoints in a Full-speed device are limited to a maximum of 64 bytes per packet, but the low level driver will take care of multi-packet transmissions on an IN endpoint.
 
-Data from the UARTs is written to a buffer. Every time a USB start-of-frame event occurs (every 1ms), the buffer is checked for pending data to be transmitted.
+### UART bridging
 
-https://www.beyondlogic.org/usbnutshell/usb1.shtml
+Bridging between the two UARTs and the USB interfaces largely takes place in `usbd_cdc_if.c`. Each bridge has a circular buffer for each data direction. The buffer from UART to USB is a simple byte buffer. Single bytes are read from the UART at a time and batched up for transmission over USB with each Start of Frame event. The buffer from the USB to the UART is a packet buffer: each receive from USB can be up to 64 bytes. A byte buffer could not receive when the receive index was less than 64 bytes from the end of the buffer.
+
+There isn't an existing hook in `usbd_cdc_if.c` for the successful completion of a transfer. As a 115kbps UART will be delivering at most 12 bytes per frame this is unlikely to cause overruns. It's okay to merely wait for the next SoF event to resume transmission.
+
+  - `CDC_Init_FS()` initiates data reception from both USB and UART.
+  - `CDC_Receive_FS()` receives a packet from the USB device, starts UART transmit if idle, and prepares to receive another packet if space permits.
+  - `CDC_SoF_FS()` checks if any data is pending from the UART, and begins a USB transmit. If the transmit fails because the USB device is busy, the next FS check will try again.
+  - `HAL_UART_TxCpltCallback()` consumes one packet from the UART buffer. If more data is available, it will begin another transmission.
 
 ### Modules
 
@@ -38,8 +45,8 @@ https://www.beyondlogic.org/usbnutshell/usb1.shtml
       - `usbd_ctlreq.c` handles Setup requests that are not Class/Vendor specific
       - `usbd_ioreq.c` sends and receives on the control endpoint
       - `usbd_cdc.c` implements the CDC device class
-      - `usbd_cdc_if.c` has an implementation of a CDC interface
       - `usb_device.c` initialises the USB device
+      - `usbd_cdc_if.c` is the controller for the three interfaces
 
 ### USB call tree
 
@@ -94,11 +101,6 @@ https://www.beyondlogic.org/usbnutshell/usb1.shtml
 
   - `stm32l0xx_hal_pcd.c:HAL_PCD_IRQHandler()` clears `USB_ISTR` flags erroneously by using a read-modify-write sequence.
   - `usbd_ctlreq.c:USBD_StdEPReq()` checks for CLASS requests twice. Only effect is mildly reduced efficiency.
-
-## Follow-ups
-
-  - What `EP_TYPE` is set by the template CDC code? 
-  - How is the buffer descriptor table assembled? By calling `HAL_PCD_EP_Open()`, after having configured the endpoint in `usbd_conf.c:USBD_LL_Init()`.
 
 ## Changes made
 
