@@ -23,15 +23,19 @@ There's a 1024-byte buffer available, to be shared between a 64-byte buffer desc
 
 ### UART bridging
 
-Bridging between the two UARTs and the USB interfaces largely takes place in `usbd_cdc_if.c`. Each bridge has a circular buffer for each data direction. The buffer from UART to USB is a simple byte buffer. Single bytes are read from the UART at a time and batched up for transmission over USB with each Start of Frame event. The buffer from the USB to the UART is a packet buffer: each receive from USB can be up to 64 bytes. A byte buffer could not receive when the receive index was less than 64 bytes from the end of the buffer.
+Bridging between the two UARTs and the USB interfaces largely takes place in `usbd_cdc_if.c`. Each bridge has a circular buffer for each data direction. The buffer from the USB to the UART is a packet buffer: each USB transaction receives up to 64 bytes of data.
 
-There isn't an existing hook in `usbd_cdc_if.c` for the successful completion of a transfer. As a 115kbps UART will be delivering at most 12 bytes per frame this is unlikely to cause overruns. It's okay to merely wait for the next SoF event to resume transmission.
+DMA is used to receive UART data into a circular buffer. Each SoF event triggers a USB transfer of whatever data is currently available. At 115.2kbps the UART will be delivering approximately 12 bytes per frame - while USB is connected, overruns will not be a concern.
 
-  - `CDC_Init_FS()` initiates data reception from both USB and UART.
-  - `CDC_Receive_FS()` receives a packet from the USB device, starts UART transmit if idle, and prepares to receive another packet if space permits.
-  - `CDC_SoF_FS()` checks if any data is pending from the UART, and begins a USB transmit. If the transmit fails because the USB device is busy, the next FS check will try again.
-  - `HAL_UART_TxCpltCallback()` consumes one packet from the UART buffer. If more data is available, it will begin another transmission.
-  - `HAL_UART_RxCpltCallback()` notes that an additional byte has been received. If there is space in the buffer, the next transmit is begun.
+Any error causes the DMA transfer to stop, and invoke `HAL_UART_ErrorCallback()`. The current implementation puts the STM32 into an infinite loop, but some more tolerant approach to try and recover would be better. Simply restarting the STM32 might work well: it will force a disconnect of the USB VCPs, signalling the error condition and recovery to the user.
+
+  - `CDC_Init_FS()` resets state and initiates data reception from both USB and UART
+  - `CDC_DeInit_FS()` switches off DMA receive and resets the receive buffer, but allows TX to finish
+  - `CDC_Receive_FS()` receives a packet from the USB device, starts UART transmit if idle, and prepares to receive another packet if space permits
+  - `CDC_SoF_FS()` checks if any data is pending from the UART, and begins a USB transmit. If the transmit fails because the USB device is busy, the next FS check will try again
+  - `HAL_UART_TxCpltCallback()` consumes one packet from the UART buffer. If more data is available, it will begin another transmission
+  - `HAL_UART_RxCpltCallback()` and `HAL_UART_RxHalfCpltCallback()` have the opportunity to test for overrun conditions, but currently do not
+  - `HAL_UART_ErrorCallback()` halts the processor
 
 ### Modules
 
@@ -103,7 +107,7 @@ There isn't an existing hook in `usbd_cdc_if.c` for the successful completion of
   - `stm32l0xx_hal_pcd.c:HAL_PCD_IRQHandler()` clears `USB_ISTR` flags erroneously by using a read-modify-write sequence.
   - `usbd_ctlreq.c:USBD_StdEPReq()` checks for CLASS requests twice. Only effect is mildly reduced efficiency.
 
-## Changes made
+## Changes made to the USB Device code (other than `usbd_cdc_if.c`)
 
  1. The STM32L073 only supports USB Full Speed. There's code to support some parts of High Speed, but they're unreachable. Removing the high speed and other-speed configuration descriptors and associated callbacks and invocations reduces code complexity.
  2. Change `usbd_desc.c:USBD_FS_DeviceDesc[]` to the Composite class.
@@ -126,8 +130,6 @@ There isn't an existing hook in `usbd_cdc_if.c` for the successful completion of
       - Modify `USBD_CDC_Setup` to pass through recipient and index data
       - Modify `USBD_LL_Init` to set up the PMA memory map
       - Update `USBD_MAX_NUM_INTERFACES`
-  6. Get rid of more high-speed noise
-  7. Implement line coding for UART1, UART2
 
 ## Task sheet
 
@@ -139,10 +141,6 @@ There isn't an existing hook in `usbd_cdc_if.c` for the successful completion of
       - [x] Modify configurations
       - [x] Change USB device design to support multiple interfaces
   - [x] Support changing line configuration
-  - [ ] Wire up two CDCs to UARTs
-      - [ ] Timer to transmit any received data via USB
-      - [ ] Rx interrupt from UART to write data to pending buffer
-      - [ ] Tx interrupt from UART to transmit any further data
-      - [ ] Function to transfer data from USB to UART buffer
+  - [x] Wire up two CDCs to UARTs
   - [ ] Implement a debug monitor on the third CDC
   - [ ] Implement ZDI

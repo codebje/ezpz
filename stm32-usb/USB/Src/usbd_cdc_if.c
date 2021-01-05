@@ -34,7 +34,6 @@ typedef struct
 	UART_HandleTypeDef *huart;
 	USBD_CDC_Function function;
 	uint8_t usb_buffer[UART_BRIDGE_BUFFERSIZE];			/* Pending data to write to USB */
-	__IO uint16_t i_usb_write;							/* The next byte to store is here */
 	__IO uint16_t i_usb_read;							/* The next byte to transmit is here */
 	struct {
 		uint8_t data[64];								/* packet data */
@@ -64,8 +63,8 @@ extern UART_HandleTypeDef huart2;
 /* Private variables ---------------------------------------------------------*/
 
 UART_BridgeTypeDef bridges[2] = {
-		{ .huart = &huart1, .function = CDC1, .i_uart_write = 0, .i_uart_read = 0, .i_usb_write = 0, .i_usb_read = 0 },
-		{ .huart = &huart2, .function = CDC2, .i_uart_write = 0, .i_uart_read = 0, .i_usb_write = 0, .i_usb_read = 0 },
+		{ .huart = &huart1, .function = CDC1, .i_uart_write = 0, .i_uart_read = 0, .i_usb_read = 0 },
+		{ .huart = &huart2, .function = CDC2, .i_uart_write = 0, .i_uart_read = 0, .i_usb_read = 0 },
 };
 
 
@@ -91,9 +90,19 @@ static int8_t CDC_Init_FS(USBD_CDC_Function function)
 	switch (function) {
 		case CDC1:
 		case CDC2:
+			/* Reset any in-progress transmission */
+			HAL_UART_AbortTransmit_IT(bridges[function].huart);
+
+			/* Reset state variables */
+			bridges[function].i_uart_read = bridges[function].i_uart_write = 0;
+			bridges[function].i_usb_read = 0;
+
+			/* Prepare CDC receive buffers */
 			USBD_CDC_SetRxBuffer(&hUsbDeviceFS, bridges[function].uart_buffer[0].data, function);
 			USBD_CDC_ReceivePacket(&hUsbDeviceFS, function);
-			HAL_UART_Receive_IT(bridges[function].huart, bridges[function].usb_buffer, 1);
+
+			/* Begin UART receive */
+			HAL_UART_Receive_DMA(bridges[function].huart, bridges[function].usb_buffer, UART_BRIDGE_BUFFERSIZE);
 			break;
 		case CDC3:
 			// TODO set a buffer up for CDC3
@@ -111,6 +120,13 @@ static int8_t CDC_Init_FS(USBD_CDC_Function function)
   */
 static int8_t CDC_DeInit_FS(USBD_CDC_Function function)
 {
+	/* Reset the RX, there's nowhere to forward the data now */
+	HAL_UART_DMAStop(&huart1);
+	HAL_UART_DMAStop(&huart2);
+	bridges[0].i_usb_read = bridges[1].i_usb_read = 0;
+
+	/* Allow any TX in flight to finish */
+
 	return (USBD_OK);
 }
 
@@ -262,17 +278,20 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len, USBD_CDC_Function function)
 static int8_t CDC_SoF_FS(void)
 {
 	for (USBD_CDC_Function i = CDC1; i < CDC3; i++) {
-		if (bridges[i].i_usb_read > bridges[i].i_usb_write) {
+		uint16_t i_usb_write = UART_BRIDGE_BUFFERSIZE - __HAL_DMA_GET_COUNTER(bridges[i].huart->hdmarx);
+		/* we might catch the DMA with its counter sitting at zero */
+		if (i_usb_write == 1024) i_usb_write = 0;
+		if (bridges[i].i_usb_read > i_usb_write) {
 			/* read pointer is ahead of write pointer: transmit up to end of buffer */
 			if (CDC_Transmit_FS(bridges[i].usb_buffer + bridges[i].i_usb_read,
 					UART_BRIDGE_BUFFERSIZE - bridges[i].i_usb_read, i) == USBD_OK) {
 				bridges[i].i_usb_read = 0;
 			}
-		} else if (bridges[i].i_usb_read < bridges[i].i_usb_write) {
+		} else if (bridges[i].i_usb_read < i_usb_write) {
 			/* read pointer is behind write pointer: transmit the data between them */
 			if (CDC_Transmit_FS(bridges[i].usb_buffer + bridges[i].i_usb_read,
-					bridges[i].i_usb_write - bridges[i].i_usb_read, i) == USBD_OK) {
-				bridges[i].i_usb_read = bridges[i].i_usb_write;
+					i_usb_write - bridges[i].i_usb_read, i) == USBD_OK) {
+				bridges[i].i_usb_read = i_usb_write;
 			}
 		}
 	}
@@ -393,18 +412,14 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	UART_BridgeTypeDef *bridge = huart == &huart1 ? &bridges[0] : &bridges[1];
+	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 
-	/* A byte has been received: increment the write pointer */
-	bridge->i_usb_write = (bridge->i_usb_write + 1) % UART_BRIDGE_BUFFERSIZE;
+	// TODO check for overrun
+}
 
-	/* Check that there's space to receive more data */
-	if ((bridge->i_usb_write + 1) % UART_BRIDGE_BUFFERSIZE != bridge->i_usb_read) {
-		HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
-		HAL_UART_Receive_IT(huart, bridge->usb_buffer + bridge->i_usb_write, 1);
-	} else {
-		HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-	}
+void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
+{
+	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 }
 
 
@@ -414,7 +429,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
  * a debugger to be connected and backtrace the cause. */
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
-//	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 	Error_Handler();
 }
 
