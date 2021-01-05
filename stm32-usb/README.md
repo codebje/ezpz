@@ -31,6 +31,7 @@ There isn't an existing hook in `usbd_cdc_if.c` for the successful completion of
   - `CDC_Receive_FS()` receives a packet from the USB device, starts UART transmit if idle, and prepares to receive another packet if space permits.
   - `CDC_SoF_FS()` checks if any data is pending from the UART, and begins a USB transmit. If the transmit fails because the USB device is busy, the next FS check will try again.
   - `HAL_UART_TxCpltCallback()` consumes one packet from the UART buffer. If more data is available, it will begin another transmission.
+  - `HAL_UART_RxCpltCallback()` notes that an additional byte has been received. If there is space in the buffer, the next transmit is begun.
 
 ### Modules
 

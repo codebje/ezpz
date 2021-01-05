@@ -400,7 +400,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 	/* Check that there's space to receive more data */
 	if ((bridge->i_usb_write + 1) % UART_BRIDGE_BUFFERSIZE != bridge->i_usb_read) {
+		HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 		HAL_UART_Receive_IT(huart, bridge->usb_buffer + bridge->i_usb_write, 1);
+	} else {
+		HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 	}
 }
 
@@ -411,7 +414,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
  * a debugger to be connected and backtrace the cause. */
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
-	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+//	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 	Error_Handler();
 }
 
