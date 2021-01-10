@@ -41,6 +41,7 @@ Any error causes the DMA transfer to stop, and invoke `HAL_UART_ErrorCallback()`
 
   - `Core`
       - `main.c` calls out to initialise peripherals, then enters the main loop. Currently this does nothing: eventually it will run the ZDI interactions
+      - `zdi.c` reads and writes data through the ZDI two-wire protocol
       - `stm32l0xx_it.c` invokes the USB peripheral controller driver (PCD) via `USB_IRQHandler()`
       - Other files configure peripherals or provide necessary stubs and are unmodified
   - `USB`
@@ -52,55 +53,6 @@ Any error causes the DMA transfer to stop, and invoke `HAL_UART_ErrorCallback()`
       - `usbd_cdc.c` implements the CDC device class
       - `usb_device.c` initialises the USB device
       - `usbd_cdc_if.c` is the controller for the three interfaces
-
-### USB call tree
-
-  - `stm32l0xx_it.c:USB_IRQHandler()` is invoked by hardware
-      - `stm32l0xx_hal_pcd.c:HAL_PCD_IRQHandler()` checks `USB_ISTR` status register
-          - If `USB_ISTR_CTR` is set, indicating an endpoint has completed a transfer:
-              - `stm32l0xx_hal_pcd.c:PCD_EP_ISR_Handler()` - endpoint handler
-                  - `usbd_conf.c:HAL_PCD_SetupStageCallback()` on SETUP
-                      - `usbd_core.c:USBD_LL_SetupStage()`
-                          - `usbd_ctlreq.c:USBD_StdDevReq()` on recipient DEVICE
-                              - `usbd_cdc.c:USBD_CDC->Setup()` on type CLASS or VENDOR
-                          - `usbd_ctlreq.c:USBD_StdItfReq()` on recipient INTERFACE
-                              - `usbd_cdc.c:USBD_CDC->Setup()` on type CLASS, VENDOR, or STANDARD
-                          - `usbd_ctlreq.c:USBD_StdEPReq()` on recipient ENDPOINT
-                  - `usbd_conf.c:HAL_PCD_DataOutStageCallback()` on OUT
-                      - `usbd_core.c:USBD_LL_DataOutStage()`
-                  - `usbd_conf.c:HAL_PCD_DataInStageCallback()' on IN
-                      - `usbd_core.c:USBD_LL_DataInStage()`
-          - If `USB_ISTR_RESET` is set:
-              - `usbd_conf.c:HAL_PCD_ResetCallback()`
-                  - `usbd_core.c:USBD_LL_SetSpeed(USBD_SPEED_FULL)`
-                  - `usbd_core.c:USBD_LL_Reset()`
-                      - `usbd_conf.c:USBD_LL_OpenEP()`
-                          - `stm32l0xx_hal_pcd.c:HAL_PCD_EP_Open()` for EP0 OUT
-                          - `stm32l0xx_hal_pcd.c:HAL_PCD_EP_Open()` for EP0 IN
-                          - Calls `DeInit` from `usbd_cdc.c:USBD_CDC`, which is `usbd_cdc.c:USBD_CDC_DeInit()`
-                              - `stm32l0xx_hal_pcd.c:USBD_LL_CloseEP()` for `CDC_IN_EP`
-                              - `stm32l0xx_hal_pcd.c:USBD_LL_CloseEP()` for `CDC_OUT_EP`
-                              - `stm32l0xx_hal_pcd.c:USBD_LL_CloseEP()` for `CDC_CMD_EP`
-                              - Calls `DeInit` from `usbd_cdc_if.c:USBD_Interface_fops_FS`
-                              - Frees the class data
-              - `stm32l0xx_hal_pcd.c:HAL_PCD_SetAddress()` to 0
-          - If `USB_ISTR_WKUP` is set:
-              - `stm32l0xx_hal_pcd_ex.c:HAL_PCDEx_LPM_Callback()` if `LPM_State` is `LPM_L1`
-                  - `__weak` stub, does nothing
-              - `usbd_conf.c:HAL_PCD_ResumeCallback()`
-                  - If low power mode is enabled, clears sleep on exit bit
-                  - `usbd_core.c:USBD_LL_Resume()` sets state to what it was before suspend
-          - If `USB_ISTR_SUSP` is set:
-              - `usbd_conf.c:HAL_PCD_SuspendCallback()`
-                  - `usbd_core.c:USBD_LL_Suspend()` sets state to suspended
-                  - If low power mode is enabled, puts µC to sleep on exit from ISR
-          - If `USB_ISTR_L1REQ` is set:
-              - `stm32l0xx_hal_pcd_ex.c:HAL_PCDEx_LPM_Callback()` if `LPM_State` is `LPM_L0`
-              - `usbd_conf.c:HAL_PCD_SuspendCallback()` otherwise
-          - If `USB_ISTR_SOF` is set:
-              - `usbd_conf.c:HAL_PCD_SOFCallback()`
-                  - `usbd_core.c:USBD_LL_SOF()`
-                      - Looks up class callback in `usbd_cdc.c:USBD_CDC`, which is `NULL`
 
 ## Issues
 
@@ -144,3 +96,7 @@ Any error causes the DMA transfer to stop, and invoke `HAL_UART_ErrorCallback()`
   - [x] Wire up two CDCs to UARTs
   - [ ] Implement a debug monitor on the third CDC
   - [ ] Implement ZDI
+      - [x] ZDI write single byte
+      - [ ] ZDI read single byte
+      - [ ] ZDI write multiple
+      - [ ] ZDI read multiple

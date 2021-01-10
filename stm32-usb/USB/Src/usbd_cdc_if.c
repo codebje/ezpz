@@ -21,6 +21,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
+#include "zdi.h"
 
 /* Private define ------------------------------------------------------------*/
 
@@ -87,6 +88,7 @@ USBD_CDC_ItfTypeDef USBD_Interface_fops_FS =
   */
 static int8_t CDC_Init_FS(USBD_CDC_Function function)
 {
+	static uint8_t buffer[64];
 	switch (function) {
 		case CDC1:
 		case CDC2:
@@ -105,7 +107,9 @@ static int8_t CDC_Init_FS(USBD_CDC_Function function)
 			HAL_UART_Receive_DMA(bridges[function].huart, bridges[function].usb_buffer, UART_BRIDGE_BUFFERSIZE);
 			break;
 		case CDC3:
-			// TODO set a buffer up for CDC3
+			// TODO set a buffer up for CDC3, properly
+			USBD_CDC_SetRxBuffer(&hUsbDeviceFS, buffer, function);
+			USBD_CDC_ReceivePacket(&hUsbDeviceFS, function);
 			break;
 		default:
 			break;
@@ -243,7 +247,10 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t Len, USBD_CDC_Function funct
 			}
 			break;
 		case CDC3:
-			/* TODO receive CDC3 data */
+			/* TODO receive CDC3 data: temp, write to ZDI */
+			zdi_write(0xa5, Buf[0]);
+			zdi_read(0x00);
+			USBD_CDC_ReceivePacket(&hUsbDeviceFS, function);
 			break;
 		default:
 			break;
