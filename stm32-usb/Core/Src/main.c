@@ -112,6 +112,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	HAL_GPIO_TogglePin(RX_LED_GPIO_Port, RX_LED_Pin);
+	HAL_Delay(500);
 	// TODO get command line from USB CDC3
 	// TODO process command
 	// TODO transfer output to USB
@@ -306,6 +308,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, ZDI_ZDA_Pin|ZDI_ZCL_Pin, GPIO_PIN_SET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, RX_LED_Pin|TX_LED_Pin, GPIO_PIN_SET);
+
   /*Configure GPIO pin : ZDI_ZDA_Pin */
   GPIO_InitStruct.Pin = ZDI_ZDA_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
@@ -319,6 +324,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(ZDI_ZCL_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : RX_LED_Pin TX_LED_Pin */
+  GPIO_InitStruct.Pin = RX_LED_Pin|TX_LED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 }
 

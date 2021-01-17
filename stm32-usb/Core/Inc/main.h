@@ -62,9 +62,11 @@ void Error_Handler(void);
 #define ZDI_ZDA_GPIO_Port GPIOA
 #define ZDI_ZCL_Pin GPIO_PIN_5
 #define ZDI_ZCL_GPIO_Port GPIOA
+#define RX_LED_Pin GPIO_PIN_12
+#define RX_LED_GPIO_Port GPIOB
+#define TX_LED_Pin GPIO_PIN_13
+#define TX_LED_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-#define LED_Pin GPIO_PIN_5
-#define LED_GPIO_Port GPIOA
 
 /* USER CODE END Private defines */
 

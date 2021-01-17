@@ -207,6 +207,112 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t recipient, uint16_t index, uin
 	return (USBD_OK);
 }
 
+void zdi_cli_process(uint8_t chr) {
+	static char buffer[100];
+	uint8_t l, h, u;
+
+	switch (chr) {
+		case 'x':
+			snprintf(buffer, 100, "enabling single-step mode\r\n");
+			zdi_write(0x10, 0x81);
+			break;
+		case 'n':
+			snprintf(buffer, 100, "stepping one instruction\r\n");
+			zdi_write(0x10, 0x01);
+			break;
+		case 'c':
+			snprintf(buffer, 100, "disabling single-step mode\r\n");
+			zdi_write(0x10, 0x00);
+			break;
+		case 'p':
+			zdi_write(0x16, 0x07);
+			l = zdi_read(0x10);
+			h = zdi_read(0x11);
+			u = zdi_read(0x12);
+			snprintf(buffer, 100, "pc = 0x%02x%02x%02x\r\n", u, h, l);
+			break;
+		case 'm':
+			zdi_write(0x16, 0x0b);
+			zdi_write(0x16, 0x0b);
+			l = zdi_read(0x10);
+			h = zdi_read(0x11);
+			u = zdi_read(0x12);
+			snprintf(buffer, 100, "[pc] = 0x%02x%02x%02x\r\n", u, h, l);
+			break;
+		case 's':
+			l = zdi_read(0x03);
+			h = zdi_read(0x17);
+			snprintf(buffer, 100, "ZDI_ACTIVE=%d\tHALT_SLP=%d\tADL=%d\tMADL=%d\tEIF1=%d\r\n"
+					"ZDI_BUSACK_EN=%d\tZDI_BUS_STAT=\%d\r\n",
+					(l >> 7) & 1,
+					(l >> 5) & 1,
+					(l >> 4) & 1,
+					(l >> 3) & 1,
+					(l >> 2) & 1,
+					(h >> 7) & 1,
+					(h >> 6) &1);
+			break;
+		case 'q':
+			// in0 a, (0x3) to read from ZDI_ID_REV
+			// = 0xed 0x38 0x03
+			zdi_write(0x23, 0x02);		// ZDI_IS2 = 3rd byte
+			zdi_write(0x24, 0x38);		// ZDI_IS1 = 2nd byte
+			zdi_write(0x25, 0xed);		// ZDI_IS0 = 1st byte
+			zdi_write(0x16, 0x00);		// ZDI_RW_CTL = read { MBASE, A, F }
+			l = zdi_read(0x10);			// read A reg
+			snprintf(buffer, 100, "ZDI_ID_REV = %02x\r\n", l);
+			break;
+		// check RTC
+		case 'r':
+			// in0 a, (0xed) to read from RTC_CTRL
+			// = 0xed 0x38 0xed
+			zdi_write(0x23, 0xed);		// ZDI_IS2 = 3rd byte
+			zdi_write(0x24, 0x38);		// ZDI_IS1 = 2nd byte
+			zdi_write(0x25, 0xed);		// ZDI_IS0 = 1st byte
+			zdi_write(0x16, 0x00);		// ZDI_RW_CTL = read { MBASE, A, F }
+			l = zdi_read(0x10);			// read A reg
+			snprintf(buffer, 100, "RTC_CTRL = %02x\r\n", l);
+			break;
+		case 't':
+			// in0 a, (0xe0) <- seconds
+			// in0 a, (0xe1) <- minutes
+			zdi_write(0x23, 0xe0);
+			zdi_write(0x24, 0x38);
+			zdi_write(0x25, 0xed);
+			zdi_write(0x16, 0x00);
+			l = zdi_read(0x10);
+			zdi_write(0x23, 0xe1);
+			zdi_write(0x24, 0x38);
+			zdi_write(0x25, 0xed);
+			zdi_write(0x16, 0x00);
+			h = zdi_read(0x10);
+			snprintf(buffer, 100, "RTC mm:ss = %02d:%02d\r\n", h, l);
+			break;
+		default:
+			snprintf(buffer, 100, "unknown command\r\n");
+			break;
+	}
+	//	zdi_write(0x10, 0x81);	// enable single-step and break
+//	zdi_write(0x13, 0x01);
+//	zdi_write(0x14, 0x00);
+//	zdi_write(0x15, 0x00);
+//	zdi_write(0x16, 0x87);	// write pc
+	//	zdi_write(0x16, 0x0b);	// read memory at pc
+//	zdi_read(0x00);
+//	zdi_read(0x01);
+//	zdi_read(0x02);
+//	zdi_write(0x16, 0x07);	// read pc
+//	uint8_t l = zdi_read(0x10);
+//	uint8_t h = zdi_read(0x11);
+//	uint8_t u = zdi_read(0x12);
+//	zdi_read(0x03);			// read status
+//	zdi_read(0x17);			// read bus status
+//	static uint8_t buffer[20];
+//	snprintf((char *)buffer, 20, "%02x%02x%02x\r\n", u, h, l);
+	USBD_CDC_SetTxBuffer(&hUsbDeviceFS, (uint8_t *)buffer, strlen(buffer), CDC3);
+	USBD_CDC_TransmitPacket(&hUsbDeviceFS, CDC3);
+}
+
 /**
   * @brief  Data received over USB OUT endpoint are sent over CDC interface
   *         through this function.
@@ -224,7 +330,6 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t recipient, uint16_t index, uin
   */
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t Len, USBD_CDC_Function function)
 {
-
 	switch (function)
 	{
 		case CDC1:
@@ -247,10 +352,11 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t Len, USBD_CDC_Function funct
 			}
 			break;
 		case CDC3:
-			/* TODO receive CDC3 data: temp, write to ZDI */
-			zdi_write(0xa5, Buf[0]);
-			zdi_read(0x00);
+			if (Len == 1) {
+				zdi_cli_process(*Buf);
+			}
 			USBD_CDC_ReceivePacket(&hUsbDeviceFS, function);
+			HAL_GPIO_TogglePin(TX_LED_GPIO_Port, TX_LED_Pin);
 			break;
 		default:
 			break;
@@ -419,14 +525,14 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+//	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 
 	// TODO check for overrun
 }
 
 void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 {
-	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+//	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
 }
 
 
@@ -436,7 +542,8 @@ void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
  * a debugger to be connected and backtrace the cause. */
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
-	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-	Error_Handler();
+	HAL_GPIO_TogglePin(TX_LED_GPIO_Port, TX_LED_Pin);
+//	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+//	Error_Handler();
 }
 

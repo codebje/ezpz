@@ -21,6 +21,18 @@ Each CDC function has one CIC interface with one Interrupt IN endpoint, and one 
 
 There's a 1024-byte buffer available, to be shared between a 64-byte buffer descriptor table and the buffers for received and transmitted data. All endpoints in a Full-speed device are limited to a maximum of 64 bytes per packet, but the low level driver will take care of multi-packet transmissions on an IN endpoint.
 
+### ZDI protocol
+
+The ZDI protocol is documented in the eZ80 family product specifications. It's a two-wire synchronous serial protocol, with a bidirectional data signal. This signal is push-pull: the maximum speed of the clock is 8MHz, and the line should be pulled up with a minimum 10kΩ resistor. The RC network against the CPU's input pin is too slow for this to be an open drain pin.  Therefore, care is required to prevent burning pins out with contention.
+
+An application note recommends 33Ω series resistors on the line, which regrettably I did not read prior to finalising the hardware design. This would have limited current to 100mA, which still is enough to damage both devices anyway. Due to mixing up `str` and `ldr` I wound up driving the two ICs in competition anyway, but magically the protections in each seemed to save me from myself. Looks like I pulled a Homer.
+
+The protocol idles clock and data lines high. To start a transaction, the data signal is driven low while the clock is held high. Every transaction begins by the master (the STM32) sending a register address and direction bit. Between each byte is a single-bit separator - the master drives this bit at least for the first byte, but it's not clear from documentation who drives it after a read byte. Logic analyser traces suggest the CPU stops driving after the final data bit, with the pull-up resistor bringing it high shortly thereafter.
+
+It's not clear how repeated reads work. When does the CPU stop sending more data? If I do a read, then toggle the clock line again a few seconds later, will more reads happen? Is there a timeout? I assume a new start signal will terminate a read, but if the µC is interrupted after four bits of a read how would it re-synchronise to safely drive the start signal again?
+
+The operations of the break control register are a bit opaque. Reading registers or memory requires the CPU to be in ZDI mode (ie, bit 7 of `ZDI_STAT` is set). I assumed bit 0 of `ZDI_BRK_CTRL`, the `SINGLE_STEP` flag, would cause the CPU to hit its next breakpoint faster than a single ZDI transaction. Writing `$81`{.z80asm} to the register does halt the CPU and allow the other ZDI operations to work, but writing `$01`{.z80asm} doesn't result in the CPU entering ZDI mode again. I might be able to work out more when it's not just excuting `rst $38`{.z80asm} endlessly.
+
 ### UART bridging
 
 Bridging between the two UARTs and the USB interfaces largely takes place in `usbd_cdc_if.c`. Each bridge has a circular buffer for each data direction. The buffer from the USB to the UART is a packet buffer: each USB transaction receives up to 64 bytes of data.
@@ -95,8 +107,10 @@ Any error causes the DMA transfer to stop, and invoke `HAL_UART_ErrorCallback()`
   - [x] Support changing line configuration
   - [x] Wire up two CDCs to UARTs
   - [ ] Implement a debug monitor on the third CDC
+      - [x] Basic single-character interactions
+      - [ ] Command line or menu interface to 
   - [ ] Implement ZDI
       - [x] ZDI write single byte
-      - [ ] ZDI read single byte
+      - [x] ZDI read single byte
       - [ ] ZDI write multiple
       - [ ] ZDI read multiple

@@ -64,8 +64,8 @@ void zdi_write(uint8_t reg, uint8_t data)
     		".syntax	unified\n\t"
 
             /* start signal */
-            "str	%[zda_lo], [%[bsrr]]\n\t"
     		"mov	r5, %[reg]\n\t"					// r5 holds the value being sent
+            "str	%[zda_lo], [%[bsrr]]\n\t"
 
             /* bit 6 of register */
             "lsrs	r4, r5, #2\n\t"             	// shift bit 6 to bit 4
@@ -211,6 +211,8 @@ void zdi_write(uint8_t reg, uint8_t data)
             "nop\n\t"                               // delay to balance duty cycle
             "str	%[zcl_hi], [%[bsrr]]\n\t"       // drive clock HIGH
 
+    		/* wait it out and clock low once more */
+
             : /* no outputs */
             : [reg]     "r" (reg_bsrr_bits),
               [data]    "r" (data_bsrr_bits),
@@ -346,12 +348,12 @@ uint8_t zdi_read(uint8_t reg)
             "lsls	r4, r4, #16\n\t"                // shift over to reset ZDA
             "nop\n\t"                               // delay to balance duty cycle
             "str	%[zcl_lo], [%[port], #24]\n\t"  // drive clock LOW
-            "ldr	r4, [%[port], #24]\n\t"         // drive ZDA low
+            "str	r4, [%[port], #24]\n\t"         // drive ZDA low
     		"movs	r5, #16\n\t"					// r5 written BSRR will set ZDA hi-Z
             "str	%[zcl_hi], [%[port], #24]\n\t"  // drive clock HIGH
 
             /* clock bit 7 of data */
-            "ldr	r5, [%[port], #24]\n\t"			// ZDA now hi-Z
+            "str	r5, [%[port], #24]\n\t"			// ZDA now hi-Z
             "movs	%[data], #0\n\t"              	// %[data] will accumulate the incoming byte
             "str	%[zcl_lo], [%[port], #24]\n\t"  // drive clock LOW
             "nop\n\t"                               // delay to balance duty cycle
