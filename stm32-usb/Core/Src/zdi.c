@@ -13,7 +13,7 @@
 /**
  * Write a value to a ZDI register.
  *
- * Hopefully without melting down an expensie and hard to solder CPU.
+ * Hopefully without melting down an expensive and hard to solder CPU.
  */
 void zdi_write(uint8_t reg, uint8_t data)
 {

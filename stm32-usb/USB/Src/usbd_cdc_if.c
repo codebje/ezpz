@@ -25,7 +25,7 @@
 
 /* Private define ------------------------------------------------------------*/
 
-#define UART_BRIDGE_BUFFERSIZE	1024		/* use a power of two */
+#define UART_BRIDGE_BUFFERSIZE	256			/* use a power of two */
 #define UART_BRIDGE_PACKETCOUNT	16			/* use a power of two */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,6 +52,7 @@ static int8_t CDC_Init_FS(USBD_CDC_Function function);
 static int8_t CDC_DeInit_FS(USBD_CDC_Function function);
 static int8_t CDC_Control_FS(uint8_t cmd, uint8_t recipient, uint16_t index, uint8_t *pbuf, uint16_t length);
 static int8_t CDC_Receive_FS(uint8_t* pbuf, uint32_t Len, USBD_CDC_Function function);
+static int8_t CDC_TransmitCplt_FS(uint8_t *Buf, uint32_t Len, USBD_CDC_Function function);
 static int8_t CDC_SoF_FS(void);
 static void CDC_UART_SetLineCoding(UART_HandleTypeDef *uart, uint32_t bps, uint8_t stop, uint8_t parity, uint8_t data);
 
@@ -68,16 +69,21 @@ UART_BridgeTypeDef bridges[2] = {
 		{ .huart = &huart2, .function = CDC2, .i_uart_write = 0, .i_uart_read = 0, .i_usb_read = 0 },
 };
 
-
-
 USBD_CDC_ItfTypeDef USBD_Interface_fops_FS =
 {
   CDC_Init_FS,
   CDC_DeInit_FS,
   CDC_Control_FS,
   CDC_Receive_FS,
+  CDC_TransmitCplt_FS,
   CDC_SoF_FS,
 };
+
+/* Data received from CDC3 or pending to be sent to CDC3 */
+static uint8_t cdc3_rx_buffer[UART_BRIDGE_BUFFERSIZE];
+static uint8_t cdc3_tx_buffer[UART_BRIDGE_BUFFERSIZE];
+__IO static uint16_t cdc3_rx_read, cdc3_rx_write, cdc3_tx_read, cdc3_tx_write;
+__IO static uint8_t cdc3_rx_active;
 
 /* Private functions ---------------------------------------------------------*/
 
@@ -88,7 +94,9 @@ USBD_CDC_ItfTypeDef USBD_Interface_fops_FS =
   */
 static int8_t CDC_Init_FS(USBD_CDC_Function function)
 {
+	/* CDC3 will receive into this space; the data will be copied into cdc3_rx_buffer */
 	static uint8_t buffer[64];
+
 	switch (function) {
 		case CDC1:
 		case CDC2:
@@ -107,7 +115,8 @@ static int8_t CDC_Init_FS(USBD_CDC_Function function)
 			HAL_UART_Receive_DMA(bridges[function].huart, bridges[function].usb_buffer, UART_BRIDGE_BUFFERSIZE);
 			break;
 		case CDC3:
-			// TODO set a buffer up for CDC3, properly
+			cdc3_rx_read = cdc3_rx_write = cdc3_tx_read = cdc3_tx_write = 0;
+			cdc3_rx_active = 1;
 			USBD_CDC_SetRxBuffer(&hUsbDeviceFS, buffer, function);
 			USBD_CDC_ReceivePacket(&hUsbDeviceFS, function);
 			break;
@@ -207,112 +216,6 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t recipient, uint16_t index, uin
 	return (USBD_OK);
 }
 
-void zdi_cli_process(uint8_t chr) {
-	static char buffer[100];
-	uint8_t l, h, u;
-
-	switch (chr) {
-		case 'x':
-			snprintf(buffer, 100, "enabling single-step mode\r\n");
-			zdi_write(0x10, 0x81);
-			break;
-		case 'n':
-			snprintf(buffer, 100, "stepping one instruction\r\n");
-			zdi_write(0x10, 0x01);
-			break;
-		case 'c':
-			snprintf(buffer, 100, "disabling single-step mode\r\n");
-			zdi_write(0x10, 0x00);
-			break;
-		case 'p':
-			zdi_write(0x16, 0x07);
-			l = zdi_read(0x10);
-			h = zdi_read(0x11);
-			u = zdi_read(0x12);
-			snprintf(buffer, 100, "pc = 0x%02x%02x%02x\r\n", u, h, l);
-			break;
-		case 'm':
-			zdi_write(0x16, 0x0b);
-			zdi_write(0x16, 0x0b);
-			l = zdi_read(0x10);
-			h = zdi_read(0x11);
-			u = zdi_read(0x12);
-			snprintf(buffer, 100, "[pc] = 0x%02x%02x%02x\r\n", u, h, l);
-			break;
-		case 's':
-			l = zdi_read(0x03);
-			h = zdi_read(0x17);
-			snprintf(buffer, 100, "ZDI_ACTIVE=%d\tHALT_SLP=%d\tADL=%d\tMADL=%d\tEIF1=%d\r\n"
-					"ZDI_BUSACK_EN=%d\tZDI_BUS_STAT=\%d\r\n",
-					(l >> 7) & 1,
-					(l >> 5) & 1,
-					(l >> 4) & 1,
-					(l >> 3) & 1,
-					(l >> 2) & 1,
-					(h >> 7) & 1,
-					(h >> 6) &1);
-			break;
-		case 'q':
-			// in0 a, (0x3) to read from ZDI_ID_REV
-			// = 0xed 0x38 0x03
-			zdi_write(0x23, 0x02);		// ZDI_IS2 = 3rd byte
-			zdi_write(0x24, 0x38);		// ZDI_IS1 = 2nd byte
-			zdi_write(0x25, 0xed);		// ZDI_IS0 = 1st byte
-			zdi_write(0x16, 0x00);		// ZDI_RW_CTL = read { MBASE, A, F }
-			l = zdi_read(0x10);			// read A reg
-			snprintf(buffer, 100, "ZDI_ID_REV = %02x\r\n", l);
-			break;
-		// check RTC
-		case 'r':
-			// in0 a, (0xed) to read from RTC_CTRL
-			// = 0xed 0x38 0xed
-			zdi_write(0x23, 0xed);		// ZDI_IS2 = 3rd byte
-			zdi_write(0x24, 0x38);		// ZDI_IS1 = 2nd byte
-			zdi_write(0x25, 0xed);		// ZDI_IS0 = 1st byte
-			zdi_write(0x16, 0x00);		// ZDI_RW_CTL = read { MBASE, A, F }
-			l = zdi_read(0x10);			// read A reg
-			snprintf(buffer, 100, "RTC_CTRL = %02x\r\n", l);
-			break;
-		case 't':
-			// in0 a, (0xe0) <- seconds
-			// in0 a, (0xe1) <- minutes
-			zdi_write(0x23, 0xe0);
-			zdi_write(0x24, 0x38);
-			zdi_write(0x25, 0xed);
-			zdi_write(0x16, 0x00);
-			l = zdi_read(0x10);
-			zdi_write(0x23, 0xe1);
-			zdi_write(0x24, 0x38);
-			zdi_write(0x25, 0xed);
-			zdi_write(0x16, 0x00);
-			h = zdi_read(0x10);
-			snprintf(buffer, 100, "RTC mm:ss = %02d:%02d\r\n", h, l);
-			break;
-		default:
-			snprintf(buffer, 100, "unknown command\r\n");
-			break;
-	}
-	//	zdi_write(0x10, 0x81);	// enable single-step and break
-//	zdi_write(0x13, 0x01);
-//	zdi_write(0x14, 0x00);
-//	zdi_write(0x15, 0x00);
-//	zdi_write(0x16, 0x87);	// write pc
-	//	zdi_write(0x16, 0x0b);	// read memory at pc
-//	zdi_read(0x00);
-//	zdi_read(0x01);
-//	zdi_read(0x02);
-//	zdi_write(0x16, 0x07);	// read pc
-//	uint8_t l = zdi_read(0x10);
-//	uint8_t h = zdi_read(0x11);
-//	uint8_t u = zdi_read(0x12);
-//	zdi_read(0x03);			// read status
-//	zdi_read(0x17);			// read bus status
-//	static uint8_t buffer[20];
-//	snprintf((char *)buffer, 20, "%02x%02x%02x\r\n", u, h, l);
-	USBD_CDC_SetTxBuffer(&hUsbDeviceFS, (uint8_t *)buffer, strlen(buffer), CDC3);
-	USBD_CDC_TransmitPacket(&hUsbDeviceFS, CDC3);
-}
-
 /**
   * @brief  Data received over USB OUT endpoint are sent over CDC interface
   *         through this function.
@@ -330,6 +233,8 @@ void zdi_cli_process(uint8_t chr) {
   */
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t Len, USBD_CDC_Function function)
 {
+	uint16_t size;
+
 	switch (function)
 	{
 		case CDC1:
@@ -352,10 +257,20 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t Len, USBD_CDC_Function funct
 			}
 			break;
 		case CDC3:
-			if (Len == 1) {
-				zdi_cli_process(*Buf);
+			// copy data into the cdc3_rx_buffer, which might need to wrap
+			size = MIN(UART_BRIDGE_BUFFERSIZE - cdc3_rx_write, Len);			// how much fits at the end of the buffer?
+			memcpy(cdc3_rx_buffer + cdc3_rx_write, Buf, size);					// copy from the start of Buf
+			cdc3_rx_write = (cdc3_rx_write + size) % UART_BRIDGE_BUFFERSIZE;	// update write pointer
+			memcpy(cdc3_rx_buffer + cdc3_rx_write, Buf + size, Len - size);		// copy anything left over to the start of the buffer
+			cdc3_rx_write = cdc3_rx_write + (Len - size);						// update again
+
+			if ((cdc3_rx_read + UART_BRIDGE_BUFFERSIZE - 1 - cdc3_rx_write) % UART_BRIDGE_BUFFERSIZE > 64) {
+				// begin a new receive if there's space to store it
+				USBD_CDC_ReceivePacket(&hUsbDeviceFS, function);
+			} else {
+				// otherwise, flag that RX has been suspended
+				cdc3_rx_active = 0;
 			}
-			USBD_CDC_ReceivePacket(&hUsbDeviceFS, function);
 			HAL_GPIO_TogglePin(TX_LED_GPIO_Port, TX_LED_Pin);
 			break;
 		default:
@@ -363,6 +278,33 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t Len, USBD_CDC_Function funct
 	}
 
 	return (USBD_OK);
+}
+
+/**
+ * @brief	CDC_TransmitCplt_FS
+ * 			Called when a transmission has completed.
+ *
+ * @param   Buf: Buffer of data that was sent
+ * @param   Len: Number of data sent (in bytes)
+ * @param	function: the CDC function of the transfer
+ * @retval	USBD_OK if all operations are OK else USBD_FAIL
+ */
+int8_t CDC_TransmitCplt_FS(uint8_t *Buf, uint32_t Len, USBD_CDC_Function function)
+{
+	if (function == CDC3) {
+		// update read pointer based on sent data
+		cdc3_tx_read = (cdc3_tx_read + Len) % UART_BRIDGE_BUFFERSIZE;
+
+		/* Send any more pending data */
+		if (cdc3_tx_read > cdc3_tx_write) {
+			// transmit up to end of buffer
+			CDC_Transmit_FS(cdc3_tx_buffer + cdc3_tx_read, UART_BRIDGE_BUFFERSIZE - cdc3_tx_read, CDC3);
+		} else if (cdc3_tx_read < cdc3_tx_write) {
+			CDC_Transmit_FS(cdc3_tx_buffer + cdc3_tx_read, cdc3_tx_write - cdc3_tx_read, CDC3);
+		}
+	}
+
+	return USBD_OK;
 }
 
 /**
@@ -390,17 +332,21 @@ uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len, USBD_CDC_Function function)
 
 static int8_t CDC_SoF_FS(void)
 {
+	uint8_t did_change = 0;
+
 	for (USBD_CDC_Function i = CDC1; i < CDC3; i++) {
 		uint16_t i_usb_write = UART_BRIDGE_BUFFERSIZE - __HAL_DMA_GET_COUNTER(bridges[i].huart->hdmarx);
 		/* we might catch the DMA with its counter sitting at zero */
 		if (i_usb_write == 1024) i_usb_write = 0;
 		if (bridges[i].i_usb_read > i_usb_write) {
+			did_change = 1;
 			/* read pointer is ahead of write pointer: transmit up to end of buffer */
 			if (CDC_Transmit_FS(bridges[i].usb_buffer + bridges[i].i_usb_read,
 					UART_BRIDGE_BUFFERSIZE - bridges[i].i_usb_read, i) == USBD_OK) {
 				bridges[i].i_usb_read = 0;
 			}
 		} else if (bridges[i].i_usb_read < i_usb_write) {
+			did_change = 1;
 			/* read pointer is behind write pointer: transmit the data between them */
 			if (CDC_Transmit_FS(bridges[i].usb_buffer + bridges[i].i_usb_read,
 					i_usb_write - bridges[i].i_usb_read, i) == USBD_OK) {
@@ -408,6 +354,14 @@ static int8_t CDC_SoF_FS(void)
 			}
 		}
 	}
+
+	if (did_change) {
+		// XXX RX pin change
+//		HAL_GPIO_TogglePin(RX_LED_GPIO_Port, RX_LED_Pin);
+	}
+
+	/* Let the transmit complete callback attempt to send more data */
+	CDC_TransmitCplt_FS(NULL, 0, CDC3);
 
 	return (USBD_OK);
 }
@@ -525,14 +479,15 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-//	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+	// XXX RX pin change
+//	HAL_GPIO_WritePin(RX_LED_GPIO_Port, RX_LED_Pin, GPIO_PIN_RESET);
 
 	// TODO check for overrun
 }
 
 void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 {
-//	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+//	HAL_GPIO_WritePin(RX_LED_GPIO_Port, RX_LED_Pin, GPIO_PIN_RESET);
 }
 
 
@@ -542,8 +497,33 @@ void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
  * a debugger to be connected and backtrace the cause. */
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
-	HAL_GPIO_TogglePin(TX_LED_GPIO_Port, TX_LED_Pin);
-//	HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-//	Error_Handler();
+	// XXX RX pin change
+	HAL_GPIO_WritePin(RX_LED_GPIO_Port, RX_LED_Pin, GPIO_PIN_RESET);
+}
+
+/**
+ * CDC3 is mapped to IO putchar/getchar
+ */
+int __io_putchar(int ch) {
+	if ((cdc3_tx_write + 1) % UART_BRIDGE_BUFFERSIZE != cdc3_tx_read) {
+		cdc3_tx_buffer[cdc3_tx_write] = (uint8_t)ch;
+		cdc3_tx_write = (cdc3_tx_write + 1) % UART_BRIDGE_BUFFERSIZE;
+	}
+	return 0;
+}
+
+int __io_getchar(void) {
+	while (cdc3_rx_read == cdc3_rx_write) {
+	}
+	uint8_t in = cdc3_rx_buffer[cdc3_rx_read];
+	cdc3_rx_read = (cdc3_rx_read + 1) % UART_BRIDGE_BUFFERSIZE;
+
+	if (!cdc3_rx_active && (cdc3_rx_read + UART_BRIDGE_BUFFERSIZE - 1 - cdc3_rx_write) % UART_BRIDGE_BUFFERSIZE > 64) {
+		// begin a new receive if there's space to store it
+		cdc3_rx_active = 1;
+		USBD_CDC_ReceivePacket(&hUsbDeviceFS, CDC3);
+	}
+
+	return in;
 }
 

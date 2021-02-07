@@ -671,6 +671,7 @@ static uint8_t  USBD_CDC_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum)
     }
     else
     {
+      ((USBD_CDC_ItfTypeDef *)pdev->pUserData)->Transmit(hcdc->function[fn].TxBuffer, hcdc->function[fn].TxLength, fn);
       hcdc->function[fn].TxState = 0U;
     }
     return USBD_OK;
@@ -852,7 +853,6 @@ uint8_t  USBD_CDC_TransmitPacket(USBD_HandleTypeDef *pdev, USBD_CDC_Function fun
     return USBD_FAIL;
   }
 }
-
 
 /**
   * @brief  USBD_CDC_ReceivePacket

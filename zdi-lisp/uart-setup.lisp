@@ -1,0 +1,103 @@
+;;;
+(defun hexb (x) (format t "~2,'0x" x))
+
+(defun in0 (port)
+  (zdi-exec #xed #x08 port)
+  (logand #xff (zdi-rw-read #x01)))
+
+(defun out0 (port val)
+  (zdi-exec #x3e val)
+  (zdi-exec #xed #x39 port))
+
+; symbolic names for ZDI registers
+(defvar :zdi-brk-ctl #x10)
+(defvar :zdi-stat #x03)
+(defvar :zdi-bus-stat #x17)
+
+(defun zdi-break () (zdi! :zdi-brk-ctl #x80))
+(defun zdi-cont () (zdi! :zdi-brk-ctl #x00))
+
+(defun zdi-exec (op1 &optional op2 op3 op4 op5)
+  (if op5 (zdi! #x21 op5) ())
+  (if op4 (zdi! #x22 op4) ())
+  (if op3 (zdi! #x23 op3) ())
+  (if op2 (zdi! #x24 op2) ())
+  (zdi! #x25 op1))
+
+(defun zdi-rw-read (var)
+  (when (>= 7 var 0)
+    (zdi! #x16 var)
+    (logior (ash (zdi? #x12) 16)
+            (ash (zdi? #x11) 8)
+            (zdi? #x10))))
+
+(defun zdi-status ()
+  (let ((stat (zdi? :zdi-stat))
+        (bus (zdi? :zdi-bus-stat)))
+    (format t "ZDI_ACTIVE=~3a  HALT_SLP=~3a  ADL=~3a  MADL=~3a  EIF=~3a  ZDI_BUSACK=~3a  ZDI_BUS_STAT=~a"
+            (logbitp 7 stat)
+            (logbitp 5 stat)
+            (logbitp 4 stat)
+            (logbitp 3 stat)
+            (logbitp 2 stat)
+            (logbitp 7 bus)
+            (logbitp 6 bus))))
+
+(defun zdi-reg ()
+  (format t "MFA=~6,'0x BC=~6,'0x DE=~6,'0x HL=~6,'0x IX=~6,'0x IY=~6,'0x SP=~6,'0x PC=~6,'0x"
+          (zdi-rw-read #x00)
+          (zdi-rw-read #x01)
+          (zdi-rw-read #x02)
+          (zdi-rw-read #x03)
+          (zdi-rw-read #x04)
+          (zdi-rw-read #x05)
+          (zdi-rw-read #x06)
+          (zdi-rw-read #x07)))
+
+(defun uart-setup (port baud)
+  (let ((uart-brg-l (+ port 0))
+        (uart-brg-h (+ port 1))
+        (uart-fctl (+ port 2))
+        (uart-lctl (+ port 3))
+        (uart-mctl (+ port 4))
+        (gpio-ddr (if (= port #xc0) #xa3 #x9f))
+        (gpio-alt1 (if (= port #xc0) #xa4 #xa0))
+        (gpio-alt2 (if (= port #xc0) #xa5 #xa1))
+        (brg (round (/ 50e6 (* 16 baud)))))
+    (out0 gpio-ddr #xff)
+    (out0 gpio-alt1 #x00)
+    (out0 gpio-alt2 #x03)
+    (out0 uart-lctl #x83)
+    (out0 uart-brg-l (logand #xff brg))
+    (out0 uart-brg-h (ash brg -8))
+    (out0 uart-lctl #x03)
+    (out0 uart-fctl #x01)
+    (out0 uart-fctl #x07)))
+
+(defun uart-status ()
+  (zdi-exec #xed #x00 #xd5)
+  (zdi-exec #xed #x08 #xd6)
+  (format t "~4,'0x" (zdi-rw-read #x01)))
+
+(defun uart-xmit (ch)
+  (zdi-exec #x3e (char-code ch))
+  (zdi-exec #xed #x39 #xd0))
+
+(defun uart-recv (port)
+  (loop
+    (if (not (logbitp 0 (in0 (+ port 5)))) (return))
+    (princ (code-char (in0 port)))))
+
+(defun hi ()
+  (mapc 'uart-xmit '(#\h #\e #\l #\l #\o #\Return #\Newline)))
+
+(defun now ()
+  (let ((ss (in0 #xe0))
+        (mm (in0 #xe1))
+        (hh (in0 #xe2))
+        (ww (in0 #xe3))
+        (dd (in0 #xe4))
+        (mo (in0 #xe5))
+        (yr (in0 #xe6))
+        (cc (in0 #xe7)))
+    (format t "~2,'0x~2,'0x-~2,'0x-~2,'0x ~2,'0x:~2,'0x:~2,'0x~%" cc yr mo dd hh mm ss)))

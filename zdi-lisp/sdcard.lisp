@@ -1,0 +1,57 @@
+;; commands
+(defvar cmd0 '(#x40 #x00 #x00 #x00 #x00 #x95))
+(defvar cmd8 '(#x48 #x00 #x00 #x01 #xaa #x87))
+(defvar cmd17 '(#x51 #x00 #x00 #x00 #x00 #x01))
+(defvar cmd24 '(#x58 #x00 #x00 #x00 #x00 #x01))
+(defvar cmd55 '(#x77 #x00 #x00 #x00 #x00 #x01))
+(defvar cmd58 '(#x7a #x00 #x00 #x00 #x00 #x01))
+
+(defvar acmd41 '(#x69 #x40 #x00 #x00 #x00 #x01))
+
+; set up SPI pins etc
+; pb2=ss pb3=sck pb6=miso pb7=mosi
+(defun sdgpio ()
+  (out0 #xba 0)
+  (out0 #x9b #b11111011)
+  (out0 #x9c #b00000000)
+  (out0 #x9d #b11001000)
+  (out0 #xb8 #x3f)
+  (out0 #xb9 #x00)
+  (out0 #xba #b00110000))
+
+(defun clks ()
+  (dotimes (x 10) (out0 #xbc #xff)))
+
+(defun sdss (on)
+  (out0 #x9a (if on 0 4)))
+
+(defun sdxfr (val)
+  (out0 #xbc val)
+  (in0 #xbb)
+  (let ((r (in0 #xbc)))
+    (format t "SD read: ~2,'0x~%" r)
+    r))
+
+(defun docmd (cmd &optional isr3)
+  (sdxfr #xff)
+  (sdss 1)
+  (sdxfr #xff)
+  (sdxfr #xff)
+  (mapcar sdxfr cmd)
+  (let ((x 10) (r nil))
+    (loop
+        (let ((v (sdxfr #xff)))
+          (setq r v)
+          (unless (logbitp 7 v) (return v)))
+        (setq x (- x 1))
+        (if (= x 0) (return nil)))
+    (if (and (not (logbitp 7 r)) isr3)
+      (let ((b1 (sdxfr #xff))
+            (b2 (sdxfr #xff))
+            (b3 (sdxfr #xff))
+            (b4 (sdxfr #xff)))
+        (setq r (list r b1 b2 b3 b4))))
+    (sdxfr #xff)
+    (sdss nil)
+    (sdxfr #xff)
+    r))
