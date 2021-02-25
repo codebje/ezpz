@@ -26,6 +26,20 @@ The on-die Flash has specific timing requirements for writing all bytes of a row
 
 The toolchain for building is a stock binutils-2.36 compiled for the Z80 family with the eZ80 as the default target. This provides an assembler and a suite of tools for working with ELF files, including of course the linker. The C compiler is a fork of [https://github.com/jacobly0/llvm-project](jacobly0's llvm for eZ80) which is part of a [TI CE-84+ toolchain](https://ce-programming.github.io/toolchain/). The standard library I'm using at present is a mix of the Zilog ZDS-II routines, my own implementation of 64-bit integer ops, a few routines from the CEdev source, and a C library from the NuttX project.
 
+### binutils 2.36.1
+
+    ./configure --target=z80-none-elf --program-prefix=ez80-none-elf- --prefix=/opt/local/ez80-none-elf
+
+Issues:
+
+  - Macros use `\argname` while ZDS assembler uses `#argname`. Hard to be compatible.
+  - In ADL mode relocations can't do computations, eg `symbol >> 8` doesn't work but should.
+  - This is not quite true - it's more that relocations can't handle 8-bit shifts.
+
+## Status of the OS
+
+An eZ80 build of NuttX tailored to my board is now possible. 
+
 ## Task list
 
   - [x] Build the motherboard
@@ -36,20 +50,37 @@ The toolchain for building is a stock binutils-2.36 compiled for the Z80 family 
       - [x] Linker: `binutils` provides `ld` and other tools
       - [x] C compiler: modified ez80-clang from CE Development Tools to target `as` instead of `fasmg`
       - [x] RTL to support ez80-clang. Partially from ZDSII, but I64 ~~and F64~~ routines need to be supplied.
+      - [ ] Build 64-bit RTL
+          - [x] `__lladd`
+          - [x] `__lland`
+          - [x] `__llcmpu`
+          - [x] `__llcmpzero`
+          - [x] `__lldivs`
+          - [x] `__lldivu`
+          - [x] `__llmulu`
+          - [x] `__llshl`
+          - [x] `__llshrs`
+          - [x] `__llshru`
+          - [x] `__llsub`
+          - [x] `__llxor`
+          - [ ] check if others are needed
+      - [ ] Build copyright-free implementation of rest of RTL
+      - [ ] Build copyright-free implementation of C stdlib - `strcpy`, `memcpy`, etc
       - [ ] Tidy up into a "toolchain" package of some kind
   - [x] Test the SD card
   - [ ] Build NuttX
-      - [x] Basic build: run from Flash, UARTs, `nsh` shell
-      - [ ] Run basic build
-      - [ ] Build RTC support
+      - [x] Build smallest target: sdboot
+      - [x] Run smallest target on board successfully
+      - [x] Switch to `nsh` build
+      - [x] Run basic build
+      - [x] Build RTC support
       - [ ] Build binfmt support
-      - [ ] Build SPI support
-      - [ ] Build EMAC support
-      - [ ] Build I2C suport
+      - [x] Build SPI/SD support
+      - [x] Build EMAC support
+      - [x] Build I2C suport
       - [ ] Calibrate `CONFIG_BOARD_LOOPSPERMSEC`
-      - [ ] Make `size_t` 24-bit, perhaps
   - [ ] Non-volatile storage
-      - [ ] NuttX mount SD card
+      - [x] NuttX mount SD card
       - [ ] NuttX format and mount CP/M partition/file/something
   - [ ] CP/M execution
       - [ ] NuttX task to launch a CP/M instance

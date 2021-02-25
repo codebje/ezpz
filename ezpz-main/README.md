@@ -54,3 +54,50 @@ U2 rotation is incorrect
 U3 rotation is incorrect
 
 [LEDs]: https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcMBMcUHYMGZIA4UA2ATmIxAUgpABZsAoMQlEbBF3G27DyLlgCYBTAGYBDAK4AbAC4BaKUIFRwKmJDCNm3DtkKt2rPSEGjJshUtUQq6zQHcj+nlTYc0Ueo7q8uP1h6QXjpOIS6ejm6sfAbutsFR4YnGQQAyFBjOHoT4AbYq4lIAzkKs0Nie6WCZeeA0XOH5hSVlFUEAHuAoxKz14Dm95FxgXKkAkgByANL0nQh4SNh0IIQ8vfrDXADKAAoAonsAIvQAStH8uZz9+VQ0ruVqUNAI9ADm52ExNIRc8ZHGSRijQSQI8Vz0eAiH0wvlqQUcKDuIURrhSwX84RoeFcgXoIlYeAahI+2GJazA0BoSHUKDxBP4CGcMRQjKM4AeGGCCBq4W5zmJ8Iy-L8WPpUL5tQlLP0gqlrPqkOlngATkLalicfkUGgQX41lc7n8xUrSRdIYLTSZ5UwrTL6KqrmhIZanSowPALczLsykYKUSZvWbPPj-BqwmSKhS2rBaQ6vvrif4qO74Akyem9SwLRnaDbLX6kRj41n7SYka7-TC3R66dUslR-UkWBSqU9ILSEeWMM2alXBXWTN3wDURr90eS+gPR8GQtP-EqkS3qTHggPwgOw-2amHQ9ioY2fQ2h0EAPbDla-WiQUjUOwslQ91j0IA
+
+# Rev. A notes
+
+ 1. Several silkscreen notes are wrong:
+      - SWDIO and SWCLK are swapped
+      - Write Protection ON and OFF are swapped
+ 2. Some things proved to be unnecessary:
+      - 3V3 and NRST pins on the SWD (H2) header
+      - SS is fine for the SD card, so H5 to choose PB1 isn't needed
+      - The SWD header is enough to program the STM32, the boot header isn't needed
+      - The ZDI header is unnecessary, as is the exposure of ZDA/ZCL on H4
+ 3. Some things are missing:
+      - Connecting SYS RESET to the STM32 would let it reboot the CPU directly
+      - Being able to expand the board and deliver more power isn't feasible
+      - A power switch for the SD card might be nice
+      - Card detect also might be nice
+ 4. Some things proved to be flat out wrong:
+      - Without MISO pulled high a driver looking for 0xFF will never find it prior to card init
+      - MDIO is supposed to be pulled up @1.5kΩ
+      - RBIAS (via R1) should be pulled low, not high
+      - FBOUT, FBIN1, FBIN2 should all be directly connected, with caps to GND each
+ 5. Some experiments worked nicely:
+      - The SRAM operates at 50MHz just fine
+      - The crystals for PHY, RTC work just fine
+      - The LED driver array of FETs works just fine
+      - The dual reset button thing is very handy
+      - Power, UART, and debug over the one USB port is very good
+
+Patches done:
+
+  - Add 1.5kΩ resistor to MDIO
+  - Correct PHY power feedback wiring
+  - TODO: correct RBIAS voltage
+
+# Rev. B fixes and improvements
+
+  - [x] Silkscreen labels
+  - [x] Remove H5 SS selection
+  - [x] Pull MISO high
+  - [x] Remove boot header
+  - [x] Fix connections for PHY feedback pins
+  - [x] Add MDIO pull-up
+  - [x] Fix R1 to pull low
+  - [ ] Replace ZCA/ZDL header with Zilog debug port 6-pin thingo
+  - [x] Add RESET line to STM32
+  - [x] Expose VBUS on H4
+  - [ ] Can I shut off U4 regulator and deliver 3V3 via H4?
