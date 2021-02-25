@@ -1,0 +1,13 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+config EZPZ_SDBOOT
+	bool "Build SD boot loader"
+	default n
+	select EZ80_BOOTLOADER
+	---help---
+		Select this option only with the boards/ezpz/sdboot
+		configuration.  This will enable the components needed only by the
+		boot loader.

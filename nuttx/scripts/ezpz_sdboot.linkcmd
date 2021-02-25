@@ -1,0 +1,120 @@
+/****************************************************************************/
+/* boards/z80/ez80/ezpz/scripts/ezpz_flash.linkcmd                          */
+/* For configurations running entirely out of FLASH                         */
+/*                                                                          */
+/*   Copyright (C) 2019 Gregory Nutt. All rights reserved.                  */
+/*   Author: Gregory Nutt <gnutt@nuttx.org>                                 */
+/*                                                                          */
+/* Redistribution and use in source and binary forms, with or without       */
+/* modification, are permitted provided that the following conditions       */
+/* are met:                                                                 */
+/*                                                                          */
+/* 1. Redistributions of source code must retain the above copyright        */
+/*    notice, this list of conditions and the following disclaimer.         */
+/* 2. Redistributions in binary form must reproduce the above copyright     */
+/*    notice, this list of conditions and the following disclaimer in       */
+/*    the documentation and/or other materials provided with the            */
+/*    distribution.                                                         */
+/* 3. Neither the name NuttX nor the names of its contributors may be       */
+/*    used to endorse or promote products derived from this software        */
+/*    without specific prior written permission.                            */
+/*                                                                          */
+/* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS      */
+/* "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT        */
+/* LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS        */
+/* FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE           */
+/* COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,      */
+/* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,     */
+/* BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS    */
+/* OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED       */
+/* AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT              */
+/* LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN        */
+/* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE          */
+/* POSSIBILITY OF SUCH DAMAGE.                                              */
+/*                                                                          */
+/****************************************************************************/
+
+MEMORY {
+    flash (rx) : ORIGIN = 0x000000, LENGTH = 256K
+    sram (rwx) : ORIGIN = 0x040000, LENGTH = 512K
+    cram (rwx) : ORIGIN = 0xffe000, LENGTH = 8K
+}
+
+_SYS_CLK_SRC = 0;
+_SYS_CLK_FREQ = 50000000;
+_OSC_FREQ_MULT = 10;
+
+__CS0_LBR_INIT_PARAM = ORIGIN(sram) >> 16;
+__CS0_UBR_INIT_PARAM = (ORIGIN(sram) + LENGTH(sram)) >> 16;
+__CS0_CTL_INIT_PARAM = 0x08;
+__CS0_BMC_INIT_PARAM = 0x00;
+__CS1_LBR_INIT_PARAM = 0x00;
+__CS1_UBR_INIT_PARAM = 0x00;
+__CS1_CTL_INIT_PARAM = 0x00;
+__CS1_BMC_INIT_PARAM = 0x00;
+__CS2_LBR_INIT_PARAM = 0x00;
+__CS2_UBR_INIT_PARAM = 0x00;
+__CS2_CTL_INIT_PARAM = 0x00;
+__CS2_BMC_INIT_PARAM = 0x00;
+__CS3_LBR_INIT_PARAM = 0x00;
+__CS3_UBR_INIT_PARAM = 0x00;
+__CS3_CTL_INIT_PARAM = 0x00;
+__CS3_BMC_INIT_PARAM = 0x00;
+__RAM_CTL_INIT_PARAM = 0xC0;
+__RAM_ADDR_U_INIT_PARAM = 0xFF;
+__FLASH_CTL_INIT_PARAM = 0x88;
+__FLASH_ADDR_U_INIT_PARAM = ORIGIN(flash) >> 16;
+__PLL_CTL0_INIT_PARAM = 0x00;
+
+ENTRY(_ez80_reset)
+SECTIONS {
+    .text : {
+        KEEP(*(.reset))
+        KEEP(*(.startup))
+        *(.text .text.*)
+        *(.rodata .rodata.*)
+    } > flash
+    __low_romcode = LOADADDR(.text);
+    __low_code = ADDR(.text);
+    __len_code = SIZEOF(.text);
+    __copy_code_to_ram = 0;
+
+    .ivects (NOLOAD) : {
+        . = . + 0x400;  /* reserve idle stack thread space */
+        KEEP(*(.ivects))
+    } > cram
+
+    .data : {
+        __low_data = .;
+        *(.data .data.*)
+        __high_data = .;
+    } > cram AT > flash
+    __low_romdata = LOADADDR(.data);
+    __len_data = SIZEOF(.data);
+
+    .bss : {
+        __low_bss = .;
+        *(.bss .bss.*)
+        __high_bss = .;
+    } > cram
+    __len_bss = SIZEOF(.bss);
+
+    __heapbot = ORIGIN(sram) + 384K;
+    __stack = ORIGIN(sram) + LENGTH(sram);
+
+    /DISCARD/ : {
+        *(.comment)
+    }
+}
+
+/*
+ORDER .RESET,.IVECTS,.STARTUP,CODE,DATA
+COPY DATA ROM
+
+DEFINE __stack = highaddr of RAM + 1
+DEFINE __heaptop = highaddr of RAM
+DEFINE __heapbot = top of RAM + 1
+DEFINE __crtl = 1
+
+*/
+
