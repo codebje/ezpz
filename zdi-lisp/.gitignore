@@ -1,3 +1,3 @@
-nuttx.hex
+*.hex
 a.out
 cpyflsh.o
