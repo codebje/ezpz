@@ -80,7 +80,11 @@
 #define ZDI_RD_PCMEM		0x0B		// Read from [PC]
 #define ZDI_WR_PCMEM		0x8B		// Write to [PC]
 
+void zdi_write_block(uint8_t reg, uint8_t *data, uint16_t count);
+void zdi_read_block(uint8_t reg, uint8_t *data, uint16_t count);
+
 void zdi_write(uint8_t reg, uint8_t data);
 uint8_t zdi_read(uint8_t reg);
+
 
 #endif /* INC_ZDI_H_ */

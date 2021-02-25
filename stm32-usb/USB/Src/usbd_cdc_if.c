@@ -26,7 +26,7 @@
 /* Private define ------------------------------------------------------------*/
 
 #define UART_BRIDGE_BUFFERSIZE	256			/* use a power of two */
-#define UART_BRIDGE_PACKETCOUNT	16			/* use a power of two */
+#define UART_BRIDGE_PACKETCOUNT	4			/* use a power of two */
 
 /* Private typedef -----------------------------------------------------------*/
 
@@ -488,6 +488,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
 {
 //	HAL_GPIO_WritePin(RX_LED_GPIO_Port, RX_LED_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_TogglePin(RX_LED_GPIO_Port, RX_LED_Pin);
 }
 
 
@@ -499,6 +500,11 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
 	// XXX RX pin change
 	HAL_GPIO_WritePin(RX_LED_GPIO_Port, RX_LED_Pin, GPIO_PIN_RESET);
+
+	UART_BridgeTypeDef *bridge = huart == &huart1 ? &bridges[0] : &bridges[1];
+	HAL_UART_DMAStop(huart);
+	bridge->i_usb_read = 0;
+	HAL_UART_Receive_DMA(huart, bridge->usb_buffer, UART_BRIDGE_BUFFERSIZE);
 }
 
 /**
