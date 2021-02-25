@@ -1,0 +1,37 @@
+VPATH += src/rtl:src/rtl64:src/cedev
+
+# CEdev sources
+ASRCS += bpopcnt.S ipopcnt.S lpopcnt.S spopcnt.S
+
+# maybes
+# strcmp.S bdivs.S icmpzero.S sremu.S strcpy.S
+# bldix.S ldiv.S seqcase.S strcspn.S bldiy.S seqcaseD.S
+# strlen.S brems.S ildix.S strncat.S bremu.S ildiy.S
+# istix.S lldix.S lstix.S setjmp.S sstix.S strncmp.S
+# istiy.S lldiy.S lstiy.S sldix.S sstiy.S strncpy.S
+# itol.S  sldiy.S strpbrk.S strrchr.S bstix.S stoiu.S
+# strspn.S bstiy.S longjmp.S sbrk.S strcat.S strstr.S
+# lcmps.S scmpzero.S sqrtf.S strchr.S
+
+# nopes
+# startup.S snot.S
+
+# ZDS RTL
+ASRCS += fpcmp.S     iand.S      irems.S     lcmpu.S     lrems.S
+ASRCS += sdivs.S     srems.S     fpdiv.S     iremu.S     lcmpzero.S
+ASRCS += sdivu.S     fpftol.S    idivs.S     ishl.S      lshl.S
+ASRCS += sshl.S      fpltof.S    idivu.S     ishrs.S     ldivs.S
+ASRCS += lshrs.S     sshrs.S     fpmul.S     ishru.S     ldivu.S
+ASRCS += lshru.S     setflag.S   sshru.S     fpneg.S     bshl.S
+ASRCS += fppack.S    imulu.S     bshrs.S     fpsub.S     indcall.S
+ASRCS += lmulu.S     lsub.S      bshru.S     fpultof.S   indcallhl.S
+ASRCS += ixor.S      lneg.S      lxor.S      smulu.S     stoi.S
+ASRCS += fpupop1.S   ineg.S      ladd.S      lnot.S      sand.S
+ASRCS += fpupop2.S   inot.S      land.S      sor.S       fpadd.S
+ASRCS += frame.S     ior.S       lor.S       sxor.S      lremu.S
+ASRCS += bdivu.S
+
+#src/rtl64:
+ASRCS += lladd.S     llcmpu.S    llcmpzero.S lldivs.S    lldivu.S
+ASRCS += llmulu.S    llshl.S     llshrs.S    llshru.S    llsub.S
+ASRCS += lland.S     llxor.S
